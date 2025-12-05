@@ -1,8 +1,38 @@
 // 메인 앱 로직
 let pdfData = null;
 
+// electronAPI 준비 대기
+function waitForElectronAPI() {
+    return new Promise((resolve) => {
+        if (window.electronAPI) {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.electronAPI) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            
+            // 최대 5초 대기
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+            }, 5000);
+        }
+    });
+}
+
 // 앱 초기화
 async function initApp() {
+    await waitForElectronAPI();
+    
+    if (!window.electronAPI) {
+        console.error('electronAPI를 사용할 수 없습니다.');
+        showMessage('Electron API를 초기화할 수 없습니다. 앱을 다시 시작해주세요.');
+        return;
+    }
+    
     await loadPdfStructure();
 }
 
@@ -129,5 +159,10 @@ function showMessage(message) {
 }
 
 // 앱 시작
-document.addEventListener('DOMContentLoaded', initApp);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    // 이미 로드된 경우
+    initApp();
+}
 

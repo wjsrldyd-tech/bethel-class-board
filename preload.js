@@ -5,3 +5,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath)
 });
 
+console.log('✅ Preload script loaded - electronAPI ready');
+

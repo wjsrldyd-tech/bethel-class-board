@@ -97,6 +97,12 @@
     </div>
 
     <!-- JavaScript 파일 로드 -->
+    <script>
+        // electronAPI 준비 확인
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, electronAPI:', window.electronAPI);
+        });
+    </script>
     <script src="js/app.js"></script>
     <script src="js/pdf-viewer.js"></script>
     <script src="js/drawing.js"></script>
