@@ -29,6 +29,13 @@
 
         <!-- 메인 콘텐츠 영역 -->
         <main class="main-content">
+            <!-- PDF 뷰어 영역 -->
+            <div class="pdf-viewer-container" id="pdfViewerContainer">
+                <div id="pdfViewer" class="pdf-viewer-wrapper">
+                    <!-- PDF 페이지가 여기에 렌더링됩니다 -->
+                </div>
+            </div>
+
             <!-- 툴바 -->
             <div class="toolbar">
                 <!-- 필기 도구 그룹 -->
@@ -97,13 +104,6 @@
                 <!-- 전체화면 -->
                 <div class="toolbar-group">
                     <button class="toolbar-btn" id="fullscreenBtn" title="전체화면">⛶</button>
-                </div>
-            </div>
-
-            <!-- PDF 뷰어 영역 -->
-            <div class="pdf-viewer-container" id="pdfViewerContainer">
-                <div id="pdfViewer" class="pdf-viewer-wrapper">
-                    <!-- PDF 페이지가 여기에 렌더링됩니다 -->
                 </div>
             </div>
         </main>
