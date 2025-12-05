@@ -38,6 +38,14 @@ const pdfViewer = {
             this.zoomOut();
         });
 
+        document.getElementById('fitToWidth').addEventListener('click', () => {
+            this.fitToWidth();
+        });
+
+        document.getElementById('fitToHeight').addEventListener('click', () => {
+            this.fitToHeight();
+        });
+
         // 전체화면
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             this.toggleFullscreen();
@@ -149,6 +157,36 @@ const pdfViewer = {
     zoomOut() {
         this.scale = Math.max(this.scale - 0.25, 0.5);
         this.renderPage();
+        this.updateZoomLevel();
+    },
+
+    async fitToWidth() {
+        if (!this.pdfDoc) return;
+        
+        const page = await this.pdfDoc.getPage(this.currentPage);
+        const viewport = page.getViewport({ scale: 1.0 });
+        
+        // 컨테이너의 가로폭 계산 (패딩 제외)
+        const containerWidth = this.container.clientWidth - 64; // 좌우 패딩 32px * 2
+        const scale = containerWidth / viewport.width;
+        
+        this.scale = Math.max(0.5, Math.min(scale, 3.0));
+        await this.renderPage();
+        this.updateZoomLevel();
+    },
+
+    async fitToHeight() {
+        if (!this.pdfDoc) return;
+        
+        const page = await this.pdfDoc.getPage(this.currentPage);
+        const viewport = page.getViewport({ scale: 1.0 });
+        
+        // 컨테이너의 세로폭 계산 (패딩 제외)
+        const containerHeight = this.container.clientHeight - 64; // 상하 패딩 32px * 2
+        const scale = containerHeight / viewport.height;
+        
+        this.scale = Math.max(0.5, Math.min(scale, 3.0));
+        await this.renderPage();
         this.updateZoomLevel();
     },
 
