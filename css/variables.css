@@ -1,0 +1,107 @@
+/* ==================== variables.css ==================== */
+/* 디자인 토큰 시스템 - 색상, 여백, 폰트, 그림자 등 */
+
+:root {
+    /* ========== 색상 토큰 ========== */
+    
+    /* 기본 색상 */
+    --bg: #F7F7F5;
+    --primary: #6366F1;
+    --primary-dark: #4F46E5;
+    --text: #3E3E3C;
+    --subtle: #ECECEA;
+    --white: #FFFFFF;
+    --border: #E6E6E3;
+    --surface: #FCFCFB;
+    --surface-muted: #F5F5F3;
+    --menu-bg: #F9F9F7;
+    --menu-primary: #8B8FF4;
+    --menu-hover: #ACAFF7;
+    --menu-text: #525251;
+    --text-muted: #78756F;
+    --grid: #E9E9E6;
+    
+    /* 추가 색상 토큰 */
+    --color-success: #2E7D32;
+    --color-success-bg: #E8F5E9;
+    --color-success-bg-hover: #C8E6C9;
+    --color-warning: #E65100;
+    --color-warning-bg: #FFF3E0;
+    --color-warning-bg-hover: #FFE0B2;
+    --color-info: #4169E1;
+    --color-info-bg: #F0F8FF;
+    --color-info-bg-hover: #E6F3FF;
+    --color-white: #FFFFFF;
+    
+    /* 반투명 색상 */
+    --color-overlay-light: rgba(0, 0, 0, 0.05);
+    --color-overlay-medium: rgba(0, 0, 0, 0.06);
+    --color-overlay-dark: rgba(0, 0, 0, 0.1);
+    --color-primary-light: rgba(106, 59, 255, 0.1);
+    --color-border-light: rgba(155, 136, 219, 0.2);
+    
+    /* ========== 여백/패딩 토큰 ========== */
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 6px;
+    --spacing-lg: 8px;
+    --spacing-xl: 10px;
+    --spacing-2xl: 12px;
+    --spacing-3xl: 15px;
+    --spacing-4xl: 16px;
+    --spacing-5xl: 18px;
+    --spacing-6xl: 20px;
+    --spacing-7xl: 24px;
+    --spacing-8xl: 30px;
+    
+    /* 특수 여백 */
+    --spacing-sidebar-width: 260px;
+    --spacing-sidebar-width-sm: 220px;
+    --spacing-border-thin: 1px;
+    --spacing-border-thick: 3px;
+    
+    /* ========== 폰트 크기 토큰 ========== */
+    --font-size-xs: 9px;
+    --font-size-sm: 10px;
+    --font-size-base: 12px;
+    --font-size-md: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 26px;
+    
+    /* 폰트 두께 */
+    --font-weight-normal: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* 라인 높이 */
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    
+    /* ========== 테두리 반경 토큰 ========== */
+    --radius-sm: 2px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    
+    /* ========== 그림자 토큰 ========== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03);
+    --shadow-md: 2px 0 8px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 3px 10px rgba(0, 0, 0, 0.06);
+    --shadow-focus: 0 0 0 3px rgba(106, 59, 255, 0.1);
+    
+    /* ========== 변환/애니메이션 토큰 ========== */
+    --transform-scale-hover: scale(1.1);
+    --transform-translate-y-up: translateY(-1px);
+    
+    /* ========== Z-index 토큰 ========== */
+    --z-index-toolbar: 100;
+    --z-index-modal: 1000;
+    
+    /* ========== 전환 시간 토큰 ========== */
+    --transition-fast: 0.2s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.35s;
+}
+

@@ -1,0 +1,50 @@
+{
+  "name": "bethel-class-board",
+  "version": "1.0.0",
+  "description": "벧엘수학 전자칠판 PDF 뷰어",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-win": "electron-builder --win",
+    "build-portable": "electron-builder --win"
+  },
+  "keywords": [
+    "pdf",
+    "viewer",
+    "education",
+    "whiteboard"
+  ],
+  "author": "벧엘수학",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.bethelmath.class-board",
+    "productName": "벧엘 전자칠판",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "벧엘-전자칠판-x64-포터블-${version}.exe"
+    }
+  }
+}
+

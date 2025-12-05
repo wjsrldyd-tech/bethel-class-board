@@ -1,0 +1,264 @@
+/* ==================== 기본 변수 & 공통 스타일 ==================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font: var(--font-size-lg)/var(--line-height-normal) 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    display: flex;
+    overflow: hidden;
+    transition: background-color var(--transition-normal) ease, color var(--transition-normal) ease;
+}
+
+/* ==================== 레이아웃 ==================== */
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ==================== 사이드바 ==================== */
+.sidebar {
+    width: var(--spacing-sidebar-width);
+    flex-shrink: 0;
+    background: var(--menu-bg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    transition: background-color var(--transition-normal) ease;
+}
+
+.sidebar-header {
+    padding: var(--spacing-5xl);
+    background: var(--primary);
+    color: var(--color-white);
+    transition: background-color var(--transition-normal) ease;
+}
+
+.sidebar-header h2 {
+    font-size: var(--font-size-xl);
+    margin: 0;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: var(--spacing-5xl);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--menu-text);
+    margin-bottom: var(--spacing-xl);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==================== 학년/단원 선택 ==================== */
+.grade-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-4xl);
+}
+
+.grade-item {
+    background: var(--surface);
+    border: var(--spacing-border-thin) solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.grade-item:hover {
+    background: var(--surface-muted);
+    border-color: var(--primary);
+}
+
+.grade-item.active {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+    color: var(--color-white);
+}
+
+.grade-item-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-md);
+}
+
+.unit-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-left: var(--spacing-2xl);
+}
+
+.unit-item {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--surface-muted);
+    border: var(--spacing-border-thin) solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-base);
+}
+
+.unit-item:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    transform: var(--transform-translate-y-up);
+}
+
+.unit-item.active {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+    color: var(--color-white);
+}
+
+/* ==================== 메인 콘텐츠 ==================== */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ==================== 툴바 ==================== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-2xl) var(--spacing-4xl);
+    background: var(--white);
+    border-bottom: var(--spacing-border-thin) solid var(--border);
+    box-shadow: var(--shadow-sm);
+    z-index: var(--z-index-toolbar);
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 0 var(--spacing-2xl);
+    border-right: var(--spacing-border-thin) solid var(--border);
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.toolbar-btn {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border: none;
+    background: var(--surface-muted);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 48px;
+    min-height: 48px;
+    justify-content: center;
+}
+
+.toolbar-btn:hover {
+    background: var(--primary);
+    color: var(--color-white);
+    transform: var(--transform-translate-y-up);
+}
+
+.toolbar-btn.active {
+    background: var(--primary);
+    color: var(--color-white);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==================== PDF 뷰어 영역 ==================== */
+.pdf-viewer-container {
+    flex: 1;
+    overflow: auto;
+    background: var(--grid);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--spacing-4xl);
+}
+
+.pdf-viewer-wrapper {
+    position: relative;
+    background: var(--white);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.pdf-page {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* ==================== 필기 캔버스 ==================== */
+.drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.drawing-canvas.drawing {
+    pointer-events: all;
+}
+
+/* ==================== 전체화면 모드 ==================== */
+body.fullscreen .sidebar {
+    display: none;
+}
+
+body.fullscreen .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-index-toolbar);
+    opacity: 0.9;
+}
+
+body.fullscreen .toolbar:hover {
+    opacity: 1;
+}
+
+/* ==================== 반응형 ==================== */
+@media (max-width: 1400px) {
+    .sidebar {
+        width: var(--spacing-sidebar-width-sm);
+    }
+}
+

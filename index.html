@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>벧엘 전자칠판</title>
+    <!-- CSS 파일 로드 -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/viewer.css">
+    <!-- PDF.js 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바: 학년/단원 선택 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 교재 선택</h2>
+            </div>
+            <div class="sidebar-content" id="sidebarContent">
+                <div class="section-title">학년을 선택하세요</div>
+                <div class="grade-list" id="gradeList">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="main-content">
+            <!-- 툴바 -->
+            <div class="toolbar">
+                <!-- 필기 도구 그룹 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="penTool" title="펜">
+                        ✏️
+                    </button>
+                    <button class="toolbar-btn" id="highlightTool" title="하이라이트">
+                        🖍️
+                    </button>
+                    <button class="toolbar-btn" id="eraserTool" title="지우개">
+                        🧹
+                    </button>
+                    <button class="toolbar-btn" id="clearTool" title="전체 지우기">
+                        🗑️
+                    </button>
+                </div>
+
+                <!-- 색상 선택 -->
+                <div class="toolbar-group">
+                    <div class="color-picker">
+                        <div class="color-option active" data-color="#FF0000" style="background: #FF0000;" title="빨강"></div>
+                        <div class="color-option" data-color="#0000FF" style="background: #0000FF;" title="파랑"></div>
+                        <div class="color-option" data-color="#00FF00" style="background: #00FF00;" title="초록"></div>
+                        <div class="color-option" data-color="#FFFF00" style="background: #FFFF00;" title="노랑"></div>
+                        <div class="color-option" data-color="#FF00FF" style="background: #FF00FF;" title="보라"></div>
+                        <div class="color-option" data-color="#000000" style="background: #000000;" title="검정"></div>
+                    </div>
+                </div>
+
+                <!-- 두께 선택 -->
+                <div class="toolbar-group">
+                    <div class="brush-size">
+                        <label class="brush-size-label">두께:</label>
+                        <input type="range" id="brushSize" min="1" max="20" value="3" class="brush-size-input">
+                        <span id="brushSizeValue">3</span>
+                    </div>
+                </div>
+
+                <!-- 페이지 네비게이션 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="prevPage" title="이전 페이지">◀</button>
+                    <span id="pageInfo" class="page-info">1 / 1</span>
+                    <button class="toolbar-btn" id="nextPage" title="다음 페이지">▶</button>
+                </div>
+
+                <!-- 줌 컨트롤 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="zoomOut" title="축소">➖</button>
+                    <span id="zoomLevel" style="min-width: 60px; text-align: center;">100%</span>
+                    <button class="toolbar-btn" id="zoomIn" title="확대">➕</button>
+                </div>
+
+                <!-- 전체화면 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="fullscreenBtn" title="전체화면">⛶</button>
+                </div>
+            </div>
+
+            <!-- PDF 뷰어 영역 -->
+            <div class="pdf-viewer-container" id="pdfViewerContainer">
+                <div id="pdfViewer" class="pdf-viewer-wrapper">
+                    <!-- PDF 페이지가 여기에 렌더링됩니다 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript 파일 로드 -->
+    <script src="js/app.js"></script>
+    <script src="js/pdf-viewer.js"></script>
+    <script src="js/drawing.js"></script>
+    <script src="js/touch.js"></script>
+</body>
+</html>
+
