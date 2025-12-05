@@ -1,8 +1,18 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 let mainWindow;
+
+// PDF 폴더 경로 (프로젝트 외부)
+function getPdfsPath() {
+  // 프로젝트 폴더의 상위 디렉토리에 pdfs 폴더 생성
+  // 예: C:\Projects\bethel-class-board -> C:\Projects\pdfs
+  const projectDir = __dirname;
+  const parentDir = path.dirname(projectDir);
+  return path.join(parentDir, 'pdfs');
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -46,11 +56,11 @@ app.on('activate', () => {
 // PDF 폴더 스캔
 ipcMain.handle('scan-pdf-folder', async () => {
   try {
-    const pdfsPath = path.join(__dirname, 'pdfs');
+    const pdfsPath = getPdfsPath();
     
     if (!fs.existsSync(pdfsPath)) {
       fs.mkdirSync(pdfsPath, { recursive: true });
-      return { success: true, data: {} };
+      return { success: true, data: {}, path: pdfsPath };
     }
 
     const grades = {};
@@ -66,7 +76,8 @@ ipcMain.handle('scan-pdf-folder', async () => {
         for (const file of files) {
           if (file.endsWith('.pdf')) {
             const unitName = file.replace('.pdf', '');
-            units[unitName] = path.join('pdfs', gradeName, file).replace(/\\/g, '/');
+            // 전체 경로를 반환
+            units[unitName] = path.join(gradePath, file);
           }
         }
 
@@ -76,7 +87,7 @@ ipcMain.handle('scan-pdf-folder', async () => {
       }
     }
 
-    return { success: true, data: grades };
+    return { success: true, data: grades, path: pdfsPath };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -85,11 +96,20 @@ ipcMain.handle('scan-pdf-folder', async () => {
 // PDF 파일 읽기
 ipcMain.handle('read-pdf-file', async (event, filePath) => {
   try {
-    const fullPath = path.join(__dirname, filePath);
+    // filePath가 이미 전체 경로인 경우 그대로 사용
+    // 상대 경로인 경우 프로젝트 외부 pdfs 폴더에서 찾기
+    let fullPath;
+    if (path.isAbsolute(filePath)) {
+      fullPath = filePath;
+    } else {
+      // 상대 경로인 경우 (하위 호환성)
+      fullPath = path.join(getPdfsPath(), filePath);
+    }
+    
     if (fs.existsSync(fullPath)) {
       return { success: true, path: fullPath };
     }
-    return { success: false, error: '파일을 찾을 수 없습니다.' };
+    return { success: false, error: '파일을 찾을 수 없습니다: ' + fullPath };
   } catch (error) {
     return { success: false, error: error.message };
   }

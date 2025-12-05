@@ -30,10 +30,13 @@ npm run build-win
 
 ## PDF 파일 구조
 
-PDF 파일은 `pdfs/` 폴더에 다음과 같은 구조로 저장하세요:
+PDF 파일은 **프로젝트 폴더 외부**의 `pdfs/` 폴더에 다음과 같은 구조로 저장하세요:
+
+예: 프로젝트가 `C:\Projects\bethel-class-board`에 있다면
+PDF 폴더는 `C:\Projects\pdfs\`에 위치합니다.
 
 ```
-pdfs/
+C:\Projects\pdfs\
 ├── 1학년/
 │   ├── 1단원.pdf
 │   ├── 2단원.pdf
@@ -43,6 +46,8 @@ pdfs/
 │   └── ...
 └── ...
 ```
+
+**참고:** PDF 파일은 Git에 커밋되지 않습니다. 각자 로컬에서 관리하세요.
 
 ## 사용 방법
 
