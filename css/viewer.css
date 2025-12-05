@@ -11,6 +11,16 @@
     justify-content: center;
 }
 
+/* 2페이지 나란히 보기 */
+.pdf-spread-container {
+    gap: var(--spacing-2xl);
+    flex-wrap: nowrap;
+}
+
+.pdf-spread-page {
+    flex-shrink: 0;
+}
+
 .pdf-page-wrapper {
     position: relative;
     background: var(--white);
