@@ -9,6 +9,9 @@ const areaSelector = {
     overlayCanvas: null,
     originalPdfCanvas: null,
     originalDrawingCanvas: null,
+    originalPdfImageData: null,
+    originalDrawingImageData: null,
+    isMasked: false,
     maskCanvas: null,
     isActive: false,
     boundHandlers: {},
@@ -23,8 +26,15 @@ const areaSelector = {
     },
 
     toggleSelectionMode() {
-        this.isActive = !this.isActive;
         const btn = document.getElementById('areaSelectBtn');
+        
+        // 이미 마스킹이 적용된 상태에서 버튼을 누르면 원본으로 복원
+        if (this.isMasked && !this.isActive) {
+            this.restoreOriginal();
+            return;
+        }
+        
+        this.isActive = !this.isActive;
         
         if (this.isActive) {
             btn.classList.add('active');
@@ -229,6 +239,12 @@ const areaSelector = {
 
         // PDF 캔버스에 마스크 적용
         const pdfCtx = pdfCanvas.getContext('2d');
+        
+        // 원본 데이터 저장 (마스킹 전)
+        if (!this.isMasked) {
+            this.originalPdfImageData = pdfCtx.getImageData(0, 0, pdfCanvas.width, pdfCanvas.height);
+        }
+        
         const pdfImageData = pdfCtx.getImageData(0, 0, pdfCanvas.width, pdfCanvas.height);
         
         // 선택 영역 외부를 흰색으로 변경
@@ -259,6 +275,12 @@ const areaSelector = {
         // 필기 캔버스에도 마스크 적용
         if (drawingCanvas) {
             const drawingCtx = drawingCanvas.getContext('2d');
+            
+            // 원본 데이터 저장 (마스킹 전)
+            if (!this.isMasked) {
+                this.originalDrawingImageData = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
+            }
+            
             const drawingImageData = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
             
             const drawScaleX = drawingCanvas.width / pageWrapper.offsetWidth;
@@ -283,8 +305,42 @@ const areaSelector = {
             drawingCtx.putImageData(drawingImageData, 0, 0);
         }
 
+        // 마스킹 적용 완료 표시
+        this.isMasked = true;
+
         // 선택 모드 종료
         this.toggleSelectionMode();
+    },
+
+    restoreOriginal() {
+        const pageWrapper = document.querySelector('.pdf-page-wrapper');
+        if (!pageWrapper) return;
+
+        const pdfCanvas = pageWrapper.querySelector('canvas:not(.drawing-canvas):not(.selection-overlay)');
+        const drawingCanvas = pageWrapper.querySelector('.drawing-canvas');
+        
+        // PDF 캔버스 원본 복원
+        if (pdfCanvas && this.originalPdfImageData) {
+            const pdfCtx = pdfCanvas.getContext('2d');
+            pdfCtx.putImageData(this.originalPdfImageData, 0, 0);
+        }
+
+        // 필기 캔버스 원본 복원
+        if (drawingCanvas && this.originalDrawingImageData) {
+            const drawingCtx = drawingCanvas.getContext('2d');
+            drawingCtx.putImageData(this.originalDrawingImageData, 0, 0);
+        }
+
+        // 마스킹 상태 초기화
+        this.isMasked = false;
+        this.originalPdfImageData = null;
+        this.originalDrawingImageData = null;
+        
+        const btn = document.getElementById('areaSelectBtn');
+        if (btn) {
+            btn.classList.remove('active');
+            btn.title = '영역 선택';
+        }
     },
 
     removeSelectionBox() {

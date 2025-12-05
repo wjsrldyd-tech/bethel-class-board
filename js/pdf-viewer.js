@@ -96,6 +96,13 @@ const pdfViewer = {
     async renderPage() {
         if (!this.pdfDoc) return;
 
+        // 영역 선택 마스킹 상태 초기화 (페이지 변경 시)
+        if (window.areaSelector) {
+            window.areaSelector.isMasked = false;
+            window.areaSelector.originalPdfImageData = null;
+            window.areaSelector.originalDrawingImageData = null;
+        }
+
         // 기존 내용 제거
         this.wrapper.innerHTML = '';
 
