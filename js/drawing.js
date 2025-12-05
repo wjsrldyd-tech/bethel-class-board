@@ -162,6 +162,11 @@ const drawingTool = {
             return;
         }
         
+        // 영역 선택 모드가 활성화되어 있으면 필기 비활성화
+        if (window.areaSelector && window.areaSelector.isActive) {
+            return;
+        }
+        
         this.isDrawing = true;
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
@@ -173,6 +178,12 @@ const drawingTool = {
 
     draw(e) {
         if (!this.isDrawing || !this.ctx || !this.canvas) return;
+        
+        // 영역 선택 모드가 활성화되어 있으면 필기 비활성화
+        if (window.areaSelector && window.areaSelector.isActive) {
+            this.stopDrawing();
+            return;
+        }
 
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
