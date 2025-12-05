@@ -5,10 +5,45 @@ const os = require('os');
 
 let mainWindow;
 
-// PDF 폴더 경로 (프로젝트 외부)
+// 설정 파일 경로
+function getConfigPath() {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'config.json');
+}
+
+// 설정 파일 읽기
+function loadConfig() {
+  try {
+    const configPath = getConfigPath();
+    if (fs.existsSync(configPath)) {
+      const configData = fs.readFileSync(configPath, 'utf-8');
+      return JSON.parse(configData);
+    }
+  } catch (error) {
+    console.error('설정 파일 읽기 오류:', error);
+  }
+  return {};
+}
+
+// 설정 파일 저장
+function saveConfig(config) {
+  try {
+    const configPath = getConfigPath();
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('설정 파일 저장 오류:', error);
+    return false;
+  }
+}
+
+// PDF 폴더 경로 가져오기
 function getPdfsPath() {
-  // 프로젝트 폴더의 상위 디렉토리에 pdfs 폴더 생성
-  // 예: C:\Projects\bethel-class-board -> C:\Projects\pdfs
+  const config = loadConfig();
+  if (config.pdfsPath && fs.existsSync(config.pdfsPath)) {
+    return config.pdfsPath;
+  }
+  // 기본 경로: 프로젝트 폴더의 상위 디렉토리에 pdfs 폴더
   const projectDir = __dirname;
   const parentDir = path.dirname(projectDir);
   return path.join(parentDir, 'pdfs');
@@ -92,6 +127,61 @@ function createWindow() {
           accelerator: 'CmdOrCtrl+Shift+I',
           click: () => {
             mainWindow.webContents.toggleDevTools();
+          }
+        }
+      ]
+    },
+    {
+      label: '설정',
+      submenu: [
+        {
+          label: '교재 폴더 설정',
+          click: async () => {
+            const result = await dialog.showOpenDialog(mainWindow, {
+              title: '교재 폴더 선택',
+              properties: ['openDirectory'],
+              defaultPath: getPdfsPath()
+            });
+
+            if (!result.canceled && result.filePaths.length > 0) {
+              const selectedPath = result.filePaths[0];
+              const config = loadConfig();
+              config.pdfsPath = selectedPath;
+              
+              if (saveConfig(config)) {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: '설정 저장',
+                  message: '교재 폴더가 설정되었습니다.',
+                  detail: `경로: ${selectedPath}\n\n앱을 다시 시작하면 적용됩니다.`,
+                  buttons: ['확인']
+                });
+              } else {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'error',
+                  title: '오류',
+                  message: '설정 저장에 실패했습니다.',
+                  buttons: ['확인']
+                });
+              }
+            }
+          }
+        },
+        {
+          label: '교재 폴더 열기',
+          click: () => {
+            const pdfsPath = getPdfsPath();
+            if (fs.existsSync(pdfsPath)) {
+              require('electron').shell.openPath(pdfsPath);
+            } else {
+              dialog.showMessageBox(mainWindow, {
+                type: 'warning',
+                title: '폴더 없음',
+                message: '교재 폴더를 찾을 수 없습니다.',
+                detail: `경로: ${pdfsPath}\n\n설정에서 교재 폴더를 다시 선택해주세요.`,
+                buttons: ['확인']
+              });
+            }
           }
         }
       ]
@@ -197,5 +287,10 @@ ipcMain.handle('read-pdf-file', async (event, filePath) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+
+// PDF 폴더 경로 가져오기
+ipcMain.handle('get-pdfs-path', () => {
+  return { success: true, path: getPdfsPath() };
 });
 
