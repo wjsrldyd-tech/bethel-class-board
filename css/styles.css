@@ -229,12 +229,10 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.drawing-canvas.drawing {
     pointer-events: all;
+    z-index: 10;
+    cursor: crosshair;
+    touch-action: none;
 }
 
 /* ==================== 전체화면 모드 ==================== */
