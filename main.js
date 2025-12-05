@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -33,6 +33,90 @@ function createWindow() {
 
   // 전체화면 지원
   mainWindow.setFullScreenable(true);
+
+  // 메뉴 설정
+  const template = [
+    {
+      label: '파일',
+      submenu: [
+        {
+          label: '종료',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: '보기',
+      submenu: [
+        {
+          label: '새로고침',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => {
+            mainWindow.reload();
+          }
+        },
+        {
+          label: '확대',
+          accelerator: 'CmdOrCtrl+Plus',
+          click: () => {
+            mainWindow.webContents.zoomLevel += 0.5;
+          }
+        },
+        {
+          label: '축소',
+          accelerator: 'CmdOrCtrl+-',
+          click: () => {
+            mainWindow.webContents.zoomLevel -= 0.5;
+          }
+        },
+        {
+          label: '원래 크기',
+          accelerator: 'CmdOrCtrl+0',
+          click: () => {
+            mainWindow.webContents.zoomLevel = 0;
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '전체 화면',
+          accelerator: process.platform === 'darwin' ? 'Ctrl+Cmd+F' : 'F11',
+          click: () => {
+            mainWindow.setFullScreen(!mainWindow.isFullScreen());
+          }
+        },
+        {
+          label: '개발자 도구',
+          accelerator: 'CmdOrCtrl+Shift+I',
+          click: () => {
+            mainWindow.webContents.toggleDevTools();
+          }
+        }
+      ]
+    },
+    {
+      label: '도움말',
+      submenu: [
+        {
+          label: '정보',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: '벧엘 전자칠판',
+              message: '벧엘 전자칠판',
+              detail: '버전 1.0.0\n\n전자칠판용 PDF 뷰어 및 필기 도구',
+              buttons: ['확인']
+            });
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
