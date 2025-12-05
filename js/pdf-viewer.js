@@ -51,8 +51,9 @@ const pdfViewer = {
             this.toggleFullscreen();
         });
 
-        // 마우스 휠 줌
+        // 마우스 휠 이벤트 처리
         this.container.addEventListener('wheel', (e) => {
+            // Ctrl/Cmd + 휠: 줌 인/아웃
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 if (e.deltaY < 0) {
@@ -61,6 +62,12 @@ const pdfViewer = {
                     this.zoomOut();
                 }
             }
+            // Shift + 휠: 좌우 스크롤
+            else if (e.shiftKey) {
+                e.preventDefault();
+                this.container.scrollLeft += e.deltaY;
+            }
+            // 일반 휠: 위아래 스크롤 (기본 동작 유지)
         });
     },
 
