@@ -117,18 +117,21 @@ body {
     cursor: pointer;
     transition: all var(--transition-fast);
     font-size: var(--font-size-base);
+    color: var(--text);
 }
 
 .unit-item:hover {
     background: var(--surface);
     border-color: var(--primary);
     transform: var(--transform-translate-y-up);
+    color: var(--text);
 }
 
 .unit-item.active {
-    background: var(--primary);
-    border-color: var(--primary-dark);
-    color: var(--color-white);
+    background: var(--primary) !important;
+    border-color: var(--primary-dark) !important;
+    color: var(--color-white) !important;
+    font-weight: var(--font-weight-semibold);
 }
 
 /* ==================== 메인 콘텐츠 ==================== */
