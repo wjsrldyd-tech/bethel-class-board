@@ -255,11 +255,12 @@ const pdfViewer = {
             const loadingTask = pdfjsLib.getDocument(filePath);
             this.pdfDoc = await loadingTask.promise;
             this.currentPage = 1;
-            this.zoomScale = 1.0;
+            this.zoomScale = 2.0; // 초기 배율 200% (수업용 최적 크기)
             this.pdfImages = [];
             this.pdfPositions = [];
             await this.renderPage();
             this.updatePageInfo();
+            this.updateZoomLevel(); // 줌 레벨 표시 업데이트
         } catch (error) {
             console.error('PDF 로드 오류:', error);
             throw error;
@@ -297,9 +298,10 @@ const pdfViewer = {
         const displayWidth = viewport.width / this.renderScale;
         const displayHeight = viewport.height / this.renderScale;
         
-        // 중앙에 배치
-        const x = (this.whiteboardCanvas.width - displayWidth) / 2;
-        const y = (this.whiteboardCanvas.height - displayHeight) / 2;
+        // 좌측 상단에 배치 (수업용)
+        const margin = 20; // 여백
+        const x = margin;
+        const y = margin;
         
         this.pdfImages.push({
             canvas: renderCanvas,
