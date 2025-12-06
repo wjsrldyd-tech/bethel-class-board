@@ -142,6 +142,11 @@ const pdfViewer = {
             this.zoomOut();
         });
 
+        // 줌 레벨 버튼 클릭 시 초기화 (200%)
+        document.getElementById('zoomLevel').addEventListener('click', () => {
+            this.resetZoom();
+        });
+
         // 전체화면
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             this.toggleFullscreen();
@@ -502,6 +507,12 @@ const pdfViewer = {
 
     zoomOut() {
         this.zoomScale = Math.max(this.zoomScale - 0.25, 0.5);
+        this.updateZoomLevel();
+        this.draw();
+    },
+
+    resetZoom() {
+        this.zoomScale = 2.0; // 초기 배율 200%
         this.updateZoomLevel();
         this.draw();
     },
