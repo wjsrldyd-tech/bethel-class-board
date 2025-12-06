@@ -238,10 +238,22 @@ const drawingTool = {
         const currentX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
         const currentY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
         
-        // 메인 캔버스와 레이어 캔버스 모두에 그리기
-        const contexts = [this.ctx];
-        if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
-            contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
+        // 필기 도구는 메인 캔버스와 레이어 캔버스 모두에 그리기
+        // 지우개는 필기 레이어 캔버스에만 적용 (PDF 보호)
+        let contexts = [];
+        
+        if (this.currentTool === 'eraser') {
+            // 지우개는 필기 레이어에만 적용
+            if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+                contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
+            }
+            // 메인 캔버스에는 그리지 않음
+        } else {
+            // 펜, 하이라이트는 메인 캔버스와 레이어 모두에 그리기
+            contexts.push(this.ctx);
+            if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+                contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
+            }
         }
         
         contexts.forEach(ctx => {
@@ -273,6 +285,11 @@ const drawingTool = {
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1.0;
         });
+        
+        // 지우개 사용 시 메인 캔버스를 다시 그려서 필기 레이어 반영
+        if (this.currentTool === 'eraser' && window.pdfViewer) {
+            window.pdfViewer.draw();
+        }
 
         this.lastX = currentX;
         this.lastY = currentY;
@@ -289,8 +306,12 @@ const drawingTool = {
     },
 
     clearCanvas() {
-        if (this.ctx && this.canvas) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // 필기 레이어 캔버스만 지우기 (PDF 보호)
+        if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+            const layerCtx = window.pdfViewer.drawingLayerCanvas.getContext('2d');
+            layerCtx.clearRect(0, 0, window.pdfViewer.drawingLayerCanvas.width, window.pdfViewer.drawingLayerCanvas.height);
+            // 메인 캔버스를 다시 그려서 필기 레이어 반영
+            window.pdfViewer.draw();
         }
     }
 };
