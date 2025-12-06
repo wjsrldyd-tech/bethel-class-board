@@ -541,19 +541,33 @@ const pdfViewer = {
         const width = Math.abs(this.cropEndX - this.cropStartX);
         const height = Math.abs(this.cropEndY - this.cropStartY);
         
-        // 반투명 배경
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 0, this.whiteboardCanvas.width / this.zoomScale, this.whiteboardCanvas.height / this.zoomScale);
+        const canvasWidth = this.whiteboardCanvas.width / this.zoomScale;
+        const canvasHeight = this.whiteboardCanvas.height / this.zoomScale;
         
-        // 선택 영역 클리어 (원본 보이게)
-        ctx.clearRect(x, y, width, height);
+        // 선택 영역을 제외한 나머지 부분에 반투명 배경 그리기 (경로 사용)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        // 전체 화면 경로
+        ctx.rect(0, 0, canvasWidth, canvasHeight);
+        // 선택 영역을 제외 (역방향으로)
+        ctx.rect(x, y, width, height);
+        ctx.fill('evenodd'); // even-odd 규칙으로 선택 영역 제외
         
-        // 선택 영역 테두리
+        // 선택 영역 테두리만 그리기
         ctx.strokeStyle = '#0066FF';
-        ctx.lineWidth = 2 / this.zoomScale;
-        ctx.setLineDash([5 / this.zoomScale, 5 / this.zoomScale]);
+        ctx.lineWidth = 3 / this.zoomScale;
+        ctx.setLineDash([8 / this.zoomScale, 4 / this.zoomScale]);
         ctx.strokeRect(x, y, width, height);
         ctx.setLineDash([]);
+        
+        // 선택 영역 모서리에 핸들 표시
+        const handleSize = 8 / this.zoomScale;
+        ctx.fillStyle = '#0066FF';
+        // 네 모서리
+        ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+        ctx.fillRect(x + width - handleSize/2, y - handleSize/2, handleSize, handleSize);
+        ctx.fillRect(x - handleSize/2, y + height - handleSize/2, handleSize, handleSize);
+        ctx.fillRect(x + width - handleSize/2, y + height - handleSize/2, handleSize, handleSize);
     },
     
     // 자르기 적용
