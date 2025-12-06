@@ -219,18 +219,10 @@ const drawingTool = {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
-        
-        // 화면 좌표를 큰 필기 영역의 절대 좌표로 변환 (뷰포트 오프셋 고려)
-        const screenX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
-        const screenY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
-        
-        // 줌 스케일과 뷰포트 오프셋을 고려한 절대 좌표
-        const zoomScale = window.pdfViewer ? window.pdfViewer.zoomScale : 1.0;
-        const viewportOffsetX = window.pdfViewer ? window.pdfViewer.viewportOffsetX : 0;
-        const viewportOffsetY = window.pdfViewer ? window.pdfViewer.viewportOffsetY : 0;
-        
-        this.lastX = (screenX / zoomScale) + viewportOffsetX;
-        this.lastY = (screenY / zoomScale) + viewportOffsetY;
+
+        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
+        this.lastX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
+        this.lastY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
     },
 
     draw(e) {
@@ -251,18 +243,10 @@ const drawingTool = {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
-        
-        // 화면 좌표를 큰 필기 영역의 절대 좌표로 변환 (뷰포트 오프셋 고려)
-        const screenX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
-        const screenY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
-        
-        // 줌 스케일과 뷰포트 오프셋을 고려한 절대 좌표
-        const zoomScale = window.pdfViewer ? window.pdfViewer.zoomScale : 1.0;
-        const viewportOffsetX = window.pdfViewer ? window.pdfViewer.viewportOffsetX : 0;
-        const viewportOffsetY = window.pdfViewer ? window.pdfViewer.viewportOffsetY : 0;
-        
-        const currentX = (screenX / zoomScale) + viewportOffsetX;
-        const currentY = (screenY / zoomScale) + viewportOffsetY;
+
+        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
+        const currentX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
+        const currentY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
         
         // 필기 도구는 메인 캔버스와 레이어 캔버스 모두에 그리기
         // 지우개는 필기 레이어 캔버스에만 적용 (PDF 보호)
