@@ -16,14 +16,8 @@ const pdfViewer = {
     drawingLayerBaseWidth: null,  // 필기 레이어 초기 너비 (절대 크기)
     drawingLayerBaseHeight: null, // 필기 레이어 초기 높이 (절대 크기)
     
-    // 큰 필기 영역 (icanNote 방식)
-    drawingAreaWidth: 4000,  // 필기 영역 너비 (큰 캔버스)
-    drawingAreaHeight: 3000, // 필기 영역 높이 (큰 캔버스)
-    viewportOffsetX: 0,      // 뷰포트 X 오프셋 (화면 이동)
-    viewportOffsetY: 0,      // 뷰포트 Y 오프셋 (화면 이동)
-    
     // 현재 모드
-    currentMode: 'draw', // 'draw', 'move', 'crop', or 'pan'
+    currentMode: 'draw', // 'draw', 'move', or 'crop'
     isDraggingPdf: false,
     dragStartX: 0,
     dragStartY: 0,
@@ -163,11 +157,6 @@ const pdfViewer = {
             this.setMode('move');
         });
         
-        // 화면 이동 모드 버튼
-        document.getElementById('panModeBtn').addEventListener('click', () => {
-            this.setMode('pan');
-        });
-        
         // 자르기 모드 버튼
         document.getElementById('cropModeBtn').addEventListener('click', () => {
             this.setMode('crop');
@@ -202,14 +191,10 @@ const pdfViewer = {
         
         // 버튼 활성화 상태 업데이트
         const moveBtn = document.getElementById('moveModeBtn');
-        const panBtn = document.getElementById('panModeBtn');
         const cropBtn = document.getElementById('cropModeBtn');
         
         if (moveBtn) {
             moveBtn.classList.toggle('active', mode === 'move');
-        }
-        if (panBtn) {
-            panBtn.classList.toggle('active', mode === 'pan');
         }
         if (cropBtn) {
             cropBtn.classList.toggle('active', mode === 'crop');
@@ -217,12 +202,9 @@ const pdfViewer = {
         
         // 커서 변경
         if (mode === 'draw') {
-            // 필기 모드일 때 펜 모양 커서
-            this.whiteboardCanvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z\' fill=\'%23000\'/%3E%3C/svg%3E") 0 24, auto';
+            this.whiteboardCanvas.style.cursor = 'crosshair';
         } else if (mode === 'crop') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
-        } else if (mode === 'pan') {
-            this.whiteboardCanvas.style.cursor = 'grab';
         } else {
             this.whiteboardCanvas.style.cursor = 'grab';
         }
@@ -237,15 +219,6 @@ const pdfViewer = {
             this.cropEndX = this.cropStartX;
             this.cropEndY = this.cropStartY;
             this.isSelectingCrop = true;
-            return;
-        }
-        
-        if (this.currentMode === 'pan') {
-            // 화면 이동 모드: 뷰포트 이동 시작
-            this.isDraggingPdf = true;
-            this.dragStartX = e.clientX;
-            this.dragStartY = e.clientY;
-            this.whiteboardCanvas.style.cursor = 'grabbing';
             return;
         }
         
@@ -276,28 +249,6 @@ const pdfViewer = {
             return;
         }
         
-        if (this.currentMode === 'pan' && this.isDraggingPdf) {
-            // 화면 이동 모드: 뷰포트 오프셋 변경 (드래그 방향과 반대로)
-            const deltaX = (e.clientX - this.dragStartX) / this.zoomScale;
-            const deltaY = (e.clientY - this.dragStartY) / this.zoomScale;
-            
-            // 사용자가 오른쪽으로 드래그하면 캔버스가 오른쪽으로 이동 (오프셋 감소)
-            this.viewportOffsetX -= deltaX;
-            this.viewportOffsetY -= deltaY;
-            
-            // 뷰포트 오프셋 범위 제한 (필기 영역 내에서만 이동)
-            const maxOffsetX = Math.max(0, this.drawingAreaWidth - this.whiteboardCanvas.width / this.zoomScale);
-            const maxOffsetY = Math.max(0, this.drawingAreaHeight - this.whiteboardCanvas.height / this.zoomScale);
-            this.viewportOffsetX = Math.max(0, Math.min(this.viewportOffsetX, maxOffsetX));
-            this.viewportOffsetY = Math.max(0, Math.min(this.viewportOffsetY, maxOffsetY));
-            
-            this.draw();
-            
-            this.dragStartX = e.clientX;
-            this.dragStartY = e.clientY;
-            return;
-        }
-        
         if (this.currentMode !== 'move' || !this.isDraggingPdf || this.dragPdfIndex < 0) return;
         
         const deltaX = (e.clientX - this.dragStartX) / this.zoomScale;
@@ -325,7 +276,7 @@ const pdfViewer = {
         if (this.isDraggingPdf) {
             this.isDraggingPdf = false;
             this.dragPdfIndex = -1;
-            if (this.currentMode === 'move' || this.currentMode === 'pan') {
+            if (this.currentMode === 'move') {
                 this.whiteboardCanvas.style.cursor = 'grab';
             }
         }
@@ -365,10 +316,6 @@ const pdfViewer = {
             this.zoomScale = 2.0; // 초기 배율 200% (수업용 최적 크기)
             this.pdfImages = [];
             this.pdfPositions = [];
-            
-            // 뷰포트 오프셋 초기화 (새로운 PDF 로드 시)
-            this.viewportOffsetX = 0;
-            this.viewportOffsetY = 0;
             
             // 필기 레이어 초기화 (새로운 PDF 로드 시)
             if (this.drawingLayerCanvas) {
@@ -453,9 +400,9 @@ const pdfViewer = {
         // 필기 레이어 캔버스 초기화 (없으면 생성)
         if (!this.drawingLayerCanvas) {
             this.drawingLayerCanvas = document.createElement('canvas');
-            // 큰 필기 영역 크기로 설정 (icanNote 방식)
-            this.drawingLayerBaseWidth = this.drawingAreaWidth;
-            this.drawingLayerBaseHeight = this.drawingAreaHeight;
+            // 초기 크기를 절대 크기로 저장 (화면 크기 변경 시에도 유지)
+            this.drawingLayerBaseWidth = canvas.width;
+            this.drawingLayerBaseHeight = canvas.height;
             this.drawingLayerCanvas.width = this.drawingLayerBaseWidth;
             this.drawingLayerCanvas.height = this.drawingLayerBaseHeight;
         }
@@ -472,43 +419,18 @@ const pdfViewer = {
         // 줌 스케일 적용
         ctx.scale(this.zoomScale, this.zoomScale);
         
-        // 뷰포트 오프셋 적용 (화면 이동)
-        ctx.translate(-this.viewportOffsetX, -this.viewportOffsetY);
-        
         // PDF 이미지들 그리기
         this.drawPdfImages(ctx);
         
-        // Transform 복원 (필기 레이어는 transform 없이 직접 그리기)
-        ctx.restore();
-        ctx.save();
-        
-        // 필기 레이어 그리기 (transform 없이 직접 그리기)
-        // 필기 레이어는 큰 필기 영역 크기로 유지하고, 화면에 그릴 때만 화면 크기에 맞춰 스케일링
-        // 뷰포트 오프셋과 줌 스케일을 고려하여 필기 레이어의 일부만 그리기
-        const sourceX = this.viewportOffsetX;
-        const sourceY = this.viewportOffsetY;
-        const sourceWidth = canvas.width / this.zoomScale;
-        const sourceHeight = canvas.height / this.zoomScale;
-        const destX = 0;
-        const destY = 0;
-        const destWidth = canvas.width;
-        const destHeight = canvas.height;
-        
-        // 필기 레이어 그리기 전 이미지 스무딩 설정 (선명도 향상)
-        const previousImageSmoothingEnabled = ctx.imageSmoothingEnabled;
-        const previousImageSmoothingQuality = ctx.imageSmoothingQuality;
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
+        // 필기 레이어 그리기 (줌 스케일 적용된 상태, 항상 최상단)
+        // 필기 레이어는 절대 크기로 유지하고, 화면에 그릴 때만 화면 크기에 맞춰 스케일링
+        const scaleX = (canvas.width / this.zoomScale) / this.drawingLayerBaseWidth;
+        const scaleY = (canvas.height / this.zoomScale) / this.drawingLayerBaseHeight;
         ctx.drawImage(
             this.drawingLayerCanvas, 
-            sourceX, sourceY, sourceWidth, sourceHeight,
-            destX, destY, destWidth, destHeight
+            0, 0, this.drawingLayerBaseWidth, this.drawingLayerBaseHeight,
+            0, 0, this.drawingLayerBaseWidth * scaleX, this.drawingLayerBaseHeight * scaleY
         );
-        
-        // 이미지 스무딩 설정 복원
-        ctx.imageSmoothingEnabled = previousImageSmoothingEnabled;
-        ctx.imageSmoothingQuality = previousImageSmoothingQuality;
         
         // 자르기 선택 영역 표시
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
