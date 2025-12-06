@@ -13,6 +13,8 @@ const pdfViewer = {
     
     // 필기 레이어 캔버스 (필기 내용 보존용)
     drawingLayerCanvas: null,
+    drawingLayerBaseWidth: null,  // 필기 레이어 초기 너비 (절대 크기)
+    drawingLayerBaseHeight: null, // 필기 레이어 초기 높이 (절대 크기)
     
     // 현재 모드
     currentMode: 'draw', // 'draw', 'move', or 'crop'
@@ -110,25 +112,8 @@ const pdfViewer = {
         this.whiteboardCanvas.width = rect.width;
         this.whiteboardCanvas.height = rect.height;
         
-        // 필기 레이어 캔버스도 리사이즈 (내용 보존)
-        if (this.drawingLayerCanvas) {
-            // 기존 필기 내용 보존
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = this.drawingLayerCanvas.width;
-            tempCanvas.height = this.drawingLayerCanvas.height;
-            tempCanvas.getContext('2d').drawImage(this.drawingLayerCanvas, 0, 0);
-            
-            // 캔버스 크기 변경 (이때 내용이 초기화됨)
-            this.drawingLayerCanvas.width = rect.width;
-            this.drawingLayerCanvas.height = rect.height;
-            
-            // 기존 내용을 새 크기에 맞춰 스케일링하여 복원
-            this.drawingLayerCanvas.getContext('2d').drawImage(
-                tempCanvas, 
-                0, 0, tempCanvas.width, tempCanvas.height,
-                0, 0, rect.width, rect.height
-            );
-        }
+        // 필기 레이어는 절대 크기로 유지 (스케일링하지 않음)
+        // 화면에 그릴 때만 비율에 맞춰 스케일링
         
         this.draw();
     },
@@ -403,21 +388,11 @@ const pdfViewer = {
         // 필기 레이어 캔버스 초기화 (없으면 생성)
         if (!this.drawingLayerCanvas) {
             this.drawingLayerCanvas = document.createElement('canvas');
-            this.drawingLayerCanvas.width = canvas.width;
-            this.drawingLayerCanvas.height = canvas.height;
-        }
-        
-        // 캔버스 크기가 변경되었으면 레이어도 리사이즈
-        if (this.drawingLayerCanvas.width !== canvas.width || this.drawingLayerCanvas.height !== canvas.height) {
-            // 기존 필기 내용 보존
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = this.drawingLayerCanvas.width;
-            tempCanvas.height = this.drawingLayerCanvas.height;
-            tempCanvas.getContext('2d').drawImage(this.drawingLayerCanvas, 0, 0);
-            
-            this.drawingLayerCanvas.width = canvas.width;
-            this.drawingLayerCanvas.height = canvas.height;
-            this.drawingLayerCanvas.getContext('2d').drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+            // 초기 크기를 절대 크기로 저장 (화면 크기 변경 시에도 유지)
+            this.drawingLayerBaseWidth = canvas.width;
+            this.drawingLayerBaseHeight = canvas.height;
+            this.drawingLayerCanvas.width = this.drawingLayerBaseWidth;
+            this.drawingLayerCanvas.height = this.drawingLayerBaseHeight;
         }
         
         // 캔버스 클리어
@@ -436,7 +411,14 @@ const pdfViewer = {
         this.drawPdfImages(ctx);
         
         // 필기 레이어 그리기 (줌 스케일 적용된 상태, 항상 최상단)
-        ctx.drawImage(this.drawingLayerCanvas, 0, 0, this.drawingLayerCanvas.width, this.drawingLayerCanvas.height);
+        // 필기 레이어는 절대 크기로 유지하고, 화면에 그릴 때만 화면 크기에 맞춰 스케일링
+        const scaleX = (canvas.width / this.zoomScale) / this.drawingLayerBaseWidth;
+        const scaleY = (canvas.height / this.zoomScale) / this.drawingLayerBaseHeight;
+        ctx.drawImage(
+            this.drawingLayerCanvas, 
+            0, 0, this.drawingLayerBaseWidth, this.drawingLayerBaseHeight,
+            0, 0, this.drawingLayerBaseWidth * scaleX, this.drawingLayerBaseHeight * scaleY
+        );
         
         // 자르기 선택 영역 표시
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
