@@ -311,6 +311,13 @@ const pdfViewer = {
             this.zoomScale = 2.0; // 초기 배율 200% (수업용 최적 크기)
             this.pdfImages = [];
             this.pdfPositions = [];
+            
+            // 필기 레이어 초기화 (새로운 PDF 로드 시)
+            if (this.drawingLayerCanvas) {
+                const ctx = this.drawingLayerCanvas.getContext('2d');
+                ctx.clearRect(0, 0, this.drawingLayerCanvas.width, this.drawingLayerCanvas.height);
+            }
+            
             await this.renderPage();
             this.updatePageInfo();
             this.updateZoomLevel(); // 줌 레벨 표시 업데이트
