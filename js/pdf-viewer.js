@@ -276,12 +276,13 @@ const pdfViewer = {
         }
         
         if (this.currentMode === 'pan' && this.isDraggingPdf) {
-            // 화면 이동 모드: 뷰포트 오프셋 변경
+            // 화면 이동 모드: 뷰포트 오프셋 변경 (드래그 방향과 반대로)
             const deltaX = (e.clientX - this.dragStartX) / this.zoomScale;
             const deltaY = (e.clientY - this.dragStartY) / this.zoomScale;
             
-            this.viewportOffsetX += deltaX;
-            this.viewportOffsetY += deltaY;
+            // 사용자가 오른쪽으로 드래그하면 캔버스가 오른쪽으로 이동 (오프셋 감소)
+            this.viewportOffsetX -= deltaX;
+            this.viewportOffsetY -= deltaY;
             
             // 뷰포트 오프셋 범위 제한 (필기 영역 내에서만 이동)
             const maxOffsetX = Math.max(0, this.drawingAreaWidth - this.whiteboardCanvas.width / this.zoomScale);
