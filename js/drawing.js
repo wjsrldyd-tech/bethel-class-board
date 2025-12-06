@@ -123,16 +123,16 @@ const drawingTool = {
 
         // 마우스 이벤트
         this.canvas.addEventListener('mousedown', (e) => {
-            // 문서 이동 모드면 필기 비활성화
-            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+            // 문서 이동 모드나 자르기 모드면 필기 비활성화
+            if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
                 return;
             }
             this.startDrawing(e);
         });
         
         this.canvas.addEventListener('mousemove', (e) => {
-            // 문서 이동 모드면 필기 비활성화
-            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+            // 문서 이동 모드나 자르기 모드면 필기 비활성화
+            if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
                 this.stopDrawing();
                 return;
             }
@@ -144,8 +144,8 @@ const drawingTool = {
 
         // 터치 이벤트
         this.canvas.addEventListener('touchstart', (e) => {
-            // 문서 이동 모드면 필기 비활성화
-            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+            // 문서 이동 모드나 자르기 모드면 필기 비활성화
+            if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
                 return;
             }
             e.preventDefault();
@@ -160,8 +160,8 @@ const drawingTool = {
         });
 
         this.canvas.addEventListener('touchmove', (e) => {
-            // 문서 이동 모드면 필기 비활성화
-            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+            // 문서 이동 모드나 자르기 모드면 필기 비활성화
+            if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
                 this.stopDrawing();
                 return;
             }
@@ -210,6 +210,10 @@ const drawingTool = {
             return;
         }
         
+        // 자르기 모드일 때 필기 비활성화
+        if (window.pdfViewer && window.pdfViewer.currentMode === 'crop') {
+            return;
+        }
         
         this.isDrawing = true;
         const rect = this.canvas.getBoundingClientRect();
@@ -226,6 +230,12 @@ const drawingTool = {
         
         // 영역 선택 모드가 활성화되어 있으면 필기 비활성화
         if (window.areaSelector && window.areaSelector.isActive) {
+            this.stopDrawing();
+            return;
+        }
+        
+        // 자르기 모드일 때 필기 비활성화
+        if (window.pdfViewer && window.pdfViewer.currentMode === 'crop') {
             this.stopDrawing();
             return;
         }
