@@ -220,9 +220,18 @@ const drawingTool = {
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
 
-        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
-        this.lastX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
-        this.lastY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
+        // 화면 좌표를 캔버스 픽셀 좌표로 변환
+        const screenX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
+        const screenY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
+        
+        // 필기 레이어용 절대 좌표 (줌과 뷰포트 오프셋 고려)
+        if (window.pdfViewer) {
+            this.lastAbsoluteX = window.pdfViewer.viewportOffsetX + (screenX / window.pdfViewer.zoomScale);
+            this.lastAbsoluteY = window.pdfViewer.viewportOffsetY + (screenY / window.pdfViewer.zoomScale);
+        } else {
+            this.lastAbsoluteX = screenX;
+            this.lastAbsoluteY = screenY;
+        }
     },
 
     draw(e) {
@@ -244,65 +253,64 @@ const drawingTool = {
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
 
-        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
-        const currentX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
-        const currentY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
+        // 화면 좌표를 캔버스 픽셀 좌표로 변환
+        const screenX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
+        const screenY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
         
-        // 필기 도구는 메인 캔버스와 레이어 캔버스 모두에 그리기
-        // 지우개는 필기 레이어 캔버스에만 적용 (PDF 보호)
-        let contexts = [];
-        
-        if (this.currentTool === 'eraser') {
-            // 지우개는 필기 레이어에만 적용
-            if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
-                contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
-            }
-            // 메인 캔버스에는 그리지 않음
+        // 필기 레이어용 절대 좌표 (줌과 뷰포트 오프셋 고려)
+        let absoluteX, absoluteY;
+        if (window.pdfViewer) {
+            absoluteX = window.pdfViewer.viewportOffsetX + (screenX / window.pdfViewer.zoomScale);
+            absoluteY = window.pdfViewer.viewportOffsetY + (screenY / window.pdfViewer.zoomScale);
         } else {
-            // 펜, 하이라이트는 메인 캔버스와 레이어 모두에 그리기
-            contexts.push(this.ctx);
-            if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
-                contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
-            }
+            absoluteX = screenX;
+            absoluteY = screenY;
         }
         
-        contexts.forEach(ctx => {
-            ctx.lineWidth = this.brushSize;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            if (this.currentTool === 'pen') {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = this.currentColor;
-                ctx.globalAlpha = 1.0;
-            } else if (this.currentTool === 'highlight') {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = this.currentColor;
-                ctx.globalAlpha = 0.3;
-            } else if (this.currentTool === 'eraser') {
-                // 지우개는 destination-out 사용 (기존 내용을 지움)
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.globalAlpha = 1.0;
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
-            }
-
-            ctx.beginPath();
-            ctx.moveTo(this.lastX, this.lastY);
-            ctx.lineTo(currentX, currentY);
-            ctx.stroke();
-            
-            // 복원
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1.0;
-        });
+        // 필기 레이어 캔버스에만 그리기 (메인 캔버스는 draw()에서 필기 레이어를 그려줌)
+        const layerCtx = window.pdfViewer && window.pdfViewer.drawingLayerCanvas 
+            ? window.pdfViewer.drawingLayerCanvas.getContext('2d')
+            : null;
         
-        // 지우개 사용 시 메인 캔버스를 다시 그려서 필기 레이어 반영
-        if (this.currentTool === 'eraser' && window.pdfViewer) {
+        if (!layerCtx) return;
+        
+        layerCtx.lineWidth = this.brushSize;
+        layerCtx.lineCap = 'round';
+        layerCtx.lineJoin = 'round';
+
+        if (this.currentTool === 'pen') {
+            layerCtx.globalCompositeOperation = 'source-over';
+            layerCtx.strokeStyle = this.currentColor;
+            layerCtx.globalAlpha = 1.0;
+        } else if (this.currentTool === 'highlight') {
+            layerCtx.globalCompositeOperation = 'source-over';
+            layerCtx.strokeStyle = this.currentColor;
+            layerCtx.globalAlpha = 0.3;
+        } else if (this.currentTool === 'eraser') {
+            // 지우개는 destination-out 사용 (기존 내용을 지움)
+            layerCtx.globalCompositeOperation = 'destination-out';
+            layerCtx.globalAlpha = 1.0;
+            layerCtx.strokeStyle = 'rgba(0,0,0,1)';
+        }
+
+        // 필기 레이어는 절대 좌표 사용 (줌과 뷰포트 오프셋 고려)
+        layerCtx.beginPath();
+        layerCtx.moveTo(this.lastAbsoluteX, this.lastAbsoluteY);
+        layerCtx.lineTo(absoluteX, absoluteY);
+        layerCtx.stroke();
+        
+        // 복원
+        layerCtx.globalCompositeOperation = 'source-over';
+        layerCtx.globalAlpha = 1.0;
+        
+        // 메인 캔버스 다시 그리기 (필기 레이어 반영)
+        if (window.pdfViewer) {
             window.pdfViewer.draw();
         }
 
-        this.lastX = currentX;
-        this.lastY = currentY;
+        // 좌표 업데이트
+        this.lastAbsoluteX = absoluteX;
+        this.lastAbsoluteY = absoluteY;
     },
 
     stopDrawing() {
