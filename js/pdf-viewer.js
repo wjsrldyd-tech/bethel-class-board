@@ -494,11 +494,21 @@ const pdfViewer = {
         const destWidth = canvas.width;
         const destHeight = canvas.height;
         
+        // 필기 레이어 그리기 전 이미지 스무딩 설정 (선명도 향상)
+        const previousImageSmoothingEnabled = ctx.imageSmoothingEnabled;
+        const previousImageSmoothingQuality = ctx.imageSmoothingQuality;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         ctx.drawImage(
             this.drawingLayerCanvas, 
             sourceX, sourceY, sourceWidth, sourceHeight,
             destX, destY, destWidth, destHeight
         );
+        
+        // 이미지 스무딩 설정 복원
+        ctx.imageSmoothingEnabled = previousImageSmoothingEnabled;
+        ctx.imageSmoothingQuality = previousImageSmoothingQuality;
         
         // 자르기 선택 영역 표시
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
