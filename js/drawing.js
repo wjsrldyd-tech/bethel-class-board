@@ -62,18 +62,30 @@ const drawingTool = {
         if (penTool) {
             penTool.addEventListener('click', () => {
                 this.setTool('pen');
+                // 펜 도구 선택 시 자동으로 필기 모드로 전환
+                if (window.pdfViewer) {
+                    window.pdfViewer.setMode('draw');
+                }
             });
         }
 
         if (highlightTool) {
             highlightTool.addEventListener('click', () => {
                 this.setTool('highlight');
+                // 하이라이트 도구 선택 시 자동으로 필기 모드로 전환
+                if (window.pdfViewer) {
+                    window.pdfViewer.setMode('draw');
+                }
             });
         }
 
         if (eraserTool) {
             eraserTool.addEventListener('click', () => {
                 this.setTool('eraser');
+                // 지우개 도구 선택 시 자동으로 필기 모드로 전환
+                if (window.pdfViewer) {
+                    window.pdfViewer.setMode('draw');
+                }
             });
         }
 
@@ -198,10 +210,6 @@ const drawingTool = {
             return;
         }
         
-        // 영역 선택 모드가 활성화되어 있으면 필기 비활성화
-        if (window.areaSelector && window.areaSelector.isActive) {
-            return;
-        }
         
         this.isDrawing = true;
         const rect = this.canvas.getBoundingClientRect();
