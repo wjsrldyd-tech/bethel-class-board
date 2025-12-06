@@ -110,10 +110,24 @@ const pdfViewer = {
         this.whiteboardCanvas.width = rect.width;
         this.whiteboardCanvas.height = rect.height;
         
-        // 필기 레이어 캔버스도 리사이즈
+        // 필기 레이어 캔버스도 리사이즈 (내용 보존)
         if (this.drawingLayerCanvas) {
+            // 기존 필기 내용 보존
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = this.drawingLayerCanvas.width;
+            tempCanvas.height = this.drawingLayerCanvas.height;
+            tempCanvas.getContext('2d').drawImage(this.drawingLayerCanvas, 0, 0);
+            
+            // 캔버스 크기 변경 (이때 내용이 초기화됨)
             this.drawingLayerCanvas.width = rect.width;
             this.drawingLayerCanvas.height = rect.height;
+            
+            // 기존 내용을 새 크기에 맞춰 스케일링하여 복원
+            this.drawingLayerCanvas.getContext('2d').drawImage(
+                tempCanvas, 
+                0, 0, tempCanvas.width, tempCanvas.height,
+                0, 0, rect.width, rect.height
+            );
         }
         
         this.draw();
