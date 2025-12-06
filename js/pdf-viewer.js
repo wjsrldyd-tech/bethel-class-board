@@ -217,7 +217,8 @@ const pdfViewer = {
         
         // 커서 변경
         if (mode === 'draw') {
-            this.whiteboardCanvas.style.cursor = 'crosshair';
+            // 필기 모드일 때 펜 모양 커서
+            this.whiteboardCanvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z\' fill=\'%23000\'/%3E%3C/svg%3E") 0 24, auto';
         } else if (mode === 'crop') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
         } else if (mode === 'pan') {
@@ -477,14 +478,26 @@ const pdfViewer = {
         // PDF 이미지들 그리기
         this.drawPdfImages(ctx);
         
-        // 필기 레이어 그리기 (줌 스케일 적용된 상태, 항상 최상단)
+        // Transform 복원 (필기 레이어는 transform 없이 직접 그리기)
+        ctx.restore();
+        ctx.save();
+        
+        // 필기 레이어 그리기 (transform 없이 직접 그리기)
         // 필기 레이어는 큰 필기 영역 크기로 유지하고, 화면에 그릴 때만 화면 크기에 맞춰 스케일링
-        const scaleX = (canvas.width / this.zoomScale) / this.drawingLayerBaseWidth;
-        const scaleY = (canvas.height / this.zoomScale) / this.drawingLayerBaseHeight;
+        // 뷰포트 오프셋과 줌 스케일을 고려하여 필기 레이어의 일부만 그리기
+        const sourceX = this.viewportOffsetX;
+        const sourceY = this.viewportOffsetY;
+        const sourceWidth = canvas.width / this.zoomScale;
+        const sourceHeight = canvas.height / this.zoomScale;
+        const destX = 0;
+        const destY = 0;
+        const destWidth = canvas.width;
+        const destHeight = canvas.height;
+        
         ctx.drawImage(
             this.drawingLayerCanvas, 
-            0, 0, this.drawingLayerBaseWidth, this.drawingLayerBaseHeight,
-            0, 0, this.drawingLayerBaseWidth * scaleX, this.drawingLayerBaseHeight * scaleY
+            sourceX, sourceY, sourceWidth, sourceHeight,
+            destX, destY, destWidth, destHeight
         );
         
         // 자르기 선택 영역 표시
