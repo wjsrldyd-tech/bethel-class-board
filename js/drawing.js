@@ -1,4 +1,4 @@
-// 필기 도구 로직
+// 필기 도구 로직 - 화이트보드 기반
 const drawingTool = {
     canvas: null,
     ctx: null,
@@ -8,34 +8,44 @@ const drawingTool = {
     brushSize: 3,
     lastX: 0,
     lastY: 0,
-    drawings: [], // 페이지별 필기 저장
+    drawings: [], // 필기 경로 저장 (undo/redo용)
+    history: [],
+    historyIndex: -1,
     initialized: false,
 
-    init(canvas, width, height) {
+    init(canvas) {
         if (!canvas) {
             console.error('Drawing canvas not found');
             return;
         }
         
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.canvas.width = width;
-        this.canvas.height = height;
+        // pdf-viewer와 같은 컨텍스트를 사용
+        if (window.pdfViewer && window.pdfViewer.whiteboardCtx) {
+            this.ctx = window.pdfViewer.whiteboardCtx;
+        } else {
+            this.ctx = canvas.getContext('2d');
+        }
         
         // 캔버스 스타일 설정
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = '0';
         this.canvas.style.left = '0';
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
         this.canvas.style.pointerEvents = 'all';
         this.canvas.style.cursor = 'crosshair';
         this.canvas.style.touchAction = 'none';
-        
-        // 이전 필기 복원 (선택적)
-        this.clearCanvas();
+        this.canvas.style.zIndex = '10';
         
         this.setupCanvasEventListeners();
         
-        console.log('Drawing tool initialized:', { width, height, canvas: this.canvas });
+        console.log('Drawing tool initialized on whiteboard canvas');
+    },
+    
+    redrawAll() {
+        // 저장된 필기 경로를 다시 그리기 (필요시 구현)
+        // 현재는 간단하게 유지
     },
 
     // 초기화 시 한 번만 실행 (버튼 이벤트)
@@ -95,18 +105,37 @@ const drawingTool = {
         }
     },
 
-    // 캔버스 이벤트 리스너 (PDF 로드 후)
+    // 캔버스 이벤트 리스너
     setupCanvasEventListeners() {
         if (!this.canvas) return;
 
         // 마우스 이벤트
-        this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
-        this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+        this.canvas.addEventListener('mousedown', (e) => {
+            // 문서 이동 모드면 필기 비활성화
+            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+                return;
+            }
+            this.startDrawing(e);
+        });
+        
+        this.canvas.addEventListener('mousemove', (e) => {
+            // 문서 이동 모드면 필기 비활성화
+            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+                this.stopDrawing();
+                return;
+            }
+            this.draw(e);
+        });
+        
         this.canvas.addEventListener('mouseup', () => this.stopDrawing());
         this.canvas.addEventListener('mouseout', () => this.stopDrawing());
 
         // 터치 이벤트
         this.canvas.addEventListener('touchstart', (e) => {
+            // 문서 이동 모드면 필기 비활성화
+            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+                return;
+            }
             e.preventDefault();
             const touch = e.touches[0];
             const rect = this.canvas.getBoundingClientRect();
@@ -119,6 +148,11 @@ const drawingTool = {
         });
 
         this.canvas.addEventListener('touchmove', (e) => {
+            // 문서 이동 모드면 필기 비활성화
+            if (window.pdfViewer && window.pdfViewer.currentMode === 'move') {
+                this.stopDrawing();
+                return;
+            }
             e.preventDefault();
             const touch = e.touches[0];
             const rect = this.canvas.getBoundingClientRect();
@@ -141,18 +175,20 @@ const drawingTool = {
         
         // 버튼 활성화 상태 업데이트
         document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            btn.classList.remove('active');
+            if (btn.id === 'penTool' || btn.id === 'highlightTool' || btn.id === 'eraserTool') {
+                btn.classList.remove('active');
+            }
         });
 
         if (tool === 'pen') {
             document.getElementById('penTool').classList.add('active');
-            this.canvas.style.cursor = 'crosshair';
+            if (this.canvas) this.canvas.style.cursor = 'crosshair';
         } else if (tool === 'highlight') {
             document.getElementById('highlightTool').classList.add('active');
-            this.canvas.style.cursor = 'crosshair';
+            if (this.canvas) this.canvas.style.cursor = 'crosshair';
         } else if (tool === 'eraser') {
             document.getElementById('eraserTool').classList.add('active');
-            this.canvas.style.cursor = 'grab';
+            if (this.canvas) this.canvas.style.cursor = 'grab';
         }
     },
 
@@ -172,6 +208,7 @@ const drawingTool = {
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         
+        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
         this.lastX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
         this.lastY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
     },
@@ -189,33 +226,45 @@ const drawingTool = {
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         
+        // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
         const currentX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
         const currentY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
-
-        this.ctx.lineWidth = this.brushSize;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
-
-        if (this.currentTool === 'pen') {
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.strokeStyle = this.currentColor;
-            this.ctx.globalAlpha = 1.0;
-        } else if (this.currentTool === 'highlight') {
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.strokeStyle = this.currentColor;
-            this.ctx.globalAlpha = 0.3;
-        } else if (this.currentTool === 'eraser') {
-            // 지우개는 destination-out 사용 (기존 내용을 지움)
-            this.ctx.globalCompositeOperation = 'destination-out';
-            this.ctx.globalAlpha = 1.0;
-            // strokeStyle은 destination-out에서는 무시되지만 명시적으로 설정
-            this.ctx.strokeStyle = 'rgba(0,0,0,1)';
+        
+        // 메인 캔버스와 레이어 캔버스 모두에 그리기
+        const contexts = [this.ctx];
+        if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+            contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
         }
+        
+        contexts.forEach(ctx => {
+            ctx.lineWidth = this.brushSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.lastX, this.lastY);
-        this.ctx.lineTo(currentX, currentY);
-        this.ctx.stroke();
+            if (this.currentTool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = this.currentColor;
+                ctx.globalAlpha = 1.0;
+            } else if (this.currentTool === 'highlight') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = this.currentColor;
+                ctx.globalAlpha = 0.3;
+            } else if (this.currentTool === 'eraser') {
+                // 지우개는 destination-out 사용 (기존 내용을 지움)
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.globalAlpha = 1.0;
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(this.lastX, this.lastY);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            
+            // 복원
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0;
+        });
 
         this.lastX = currentX;
         this.lastY = currentY;
@@ -224,13 +273,15 @@ const drawingTool = {
     stopDrawing() {
         if (this.isDrawing) {
             this.isDrawing = false;
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.globalAlpha = 1.0;
+            if (this.ctx) {
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1.0;
+            }
         }
     },
 
     clearCanvas() {
-        if (this.ctx) {
+        if (this.ctx && this.canvas) {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
     }
@@ -239,9 +290,15 @@ const drawingTool = {
 // 전역으로 노출
 window.drawingTool = drawingTool;
 
-// DOM 로드 후 툴바 이벤트 초기화
+// DOM 로드 후 툴바 이벤트 초기화 및 캔버스 초기화
 document.addEventListener('DOMContentLoaded', () => {
     drawingTool.initToolbarListeners();
+    
+    // pdf-viewer 초기화 후 drawing 초기화 (약간의 지연)
+    setTimeout(() => {
+        const whiteboardCanvas = document.getElementById('whiteboardCanvas');
+        if (whiteboardCanvas && window.pdfViewer && window.pdfViewer.whiteboardCtx) {
+            drawingTool.init(whiteboardCanvas);
+        }
+    }, 100);
 });
-
-

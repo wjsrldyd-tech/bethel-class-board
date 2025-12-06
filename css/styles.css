@@ -202,41 +202,25 @@ body {
     cursor: not-allowed;
 }
 
-/* ==================== PDF 뷰어 영역 ==================== */
-.pdf-viewer-container {
+/* ==================== 화이트보드 영역 ==================== */
+.whiteboard-container {
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     background: var(--grid);
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: var(--spacing-4xl);
+    width: 100%;
+    height: 100%;
 }
 
-.pdf-viewer-wrapper {
-    position: relative;
-    background: var(--white);
-    box-shadow: var(--shadow-lg);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.pdf-page {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
-
-/* ==================== 필기 캔버스 ==================== */
-.drawing-canvas {
+#whiteboardCanvas {
     position: absolute;
     top: 0;
     left: 0;
-    pointer-events: all;
-    z-index: 10;
+    width: 100%;
+    height: 100%;
     cursor: crosshair;
     touch-action: none;
+    background: var(--white);
 }
 
 /* ==================== 영역 선택 ==================== */

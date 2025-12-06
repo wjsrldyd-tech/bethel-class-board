@@ -29,11 +29,9 @@
 
         <!-- 메인 콘텐츠 영역 -->
         <main class="main-content">
-            <!-- PDF 뷰어 영역 -->
-            <div class="pdf-viewer-container" id="pdfViewerContainer">
-                <div id="pdfViewer" class="pdf-viewer-wrapper">
-                    <!-- PDF 페이지가 여기에 렌더링됩니다 -->
-                </div>
+            <!-- 화이트보드 영역 -->
+            <div class="whiteboard-container" id="whiteboard-container">
+                <canvas id="whiteboardCanvas"></canvas>
             </div>
 
             <!-- 툴바 -->
@@ -94,6 +92,12 @@
                     <button class="toolbar-btn" id="zoomIn" title="확대">➕</button>
                     <button class="toolbar-btn" id="fitToWidth" title="가로폭에 맞추기">↔️</button>
                     <button class="toolbar-btn" id="fitToHeight" title="세로폭에 맞추기">↕️</button>
+                </div>
+
+                <!-- 모드 전환 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="drawModeBtn" title="필기 모드">✏️</button>
+                    <button class="toolbar-btn" id="moveModeBtn" title="문서 이동 모드">✋</button>
                 </div>
 
                 <!-- 영역 선택 -->

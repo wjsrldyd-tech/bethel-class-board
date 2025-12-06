@@ -48,17 +48,12 @@ const areaSelector = {
     },
 
     enterSelectionMode() {
-        const wrapper = document.getElementById('pdfViewer');
-        if (!wrapper) return;
+        const canvas = document.getElementById('whiteboardCanvas');
+        const container = document.getElementById('whiteboard-container');
+        if (!canvas || !container) return;
 
         // 기존 선택 박스 제거
         this.removeSelectionBox();
-
-        // 필기 캔버스 비활성화
-        const drawingCanvas = document.querySelector('.drawing-canvas');
-        if (drawingCanvas) {
-            drawingCanvas.style.pointerEvents = 'none';
-        }
 
         // 필기 도구 버튼들 비활성화
         const penTool = document.getElementById('penTool');
@@ -87,50 +82,39 @@ const areaSelector = {
         this.overlayCanvas.style.pointerEvents = 'none';
         this.overlayCanvas.style.zIndex = '100';
         
-        const pageWrapper = wrapper.querySelector('.pdf-page-wrapper');
-        if (pageWrapper) {
-            const rect = pageWrapper.getBoundingClientRect();
-            const wrapperRect = wrapper.getBoundingClientRect();
-            
-            this.overlayCanvas.width = pageWrapper.offsetWidth;
-            this.overlayCanvas.height = pageWrapper.offsetHeight;
-            this.overlayCanvas.style.width = pageWrapper.offsetWidth + 'px';
-            this.overlayCanvas.style.height = pageWrapper.offsetHeight + 'px';
-            
-            pageWrapper.appendChild(this.overlayCanvas);
-        }
+        const rect = container.getBoundingClientRect();
+        this.overlayCanvas.width = canvas.width;
+        this.overlayCanvas.height = canvas.height;
+        this.overlayCanvas.style.width = rect.width + 'px';
+        this.overlayCanvas.style.height = rect.height + 'px';
+        
+        container.appendChild(this.overlayCanvas);
 
         // 이벤트 리스너 추가 (제거를 위해 바인딩된 함수 저장)
         this.boundHandlers.mousedown = this.handleMouseDown.bind(this);
         this.boundHandlers.mousemove = this.handleMouseMove.bind(this);
         this.boundHandlers.mouseup = this.handleMouseUp.bind(this);
         
-        wrapper.addEventListener('mousedown', this.boundHandlers.mousedown);
-        wrapper.addEventListener('mousemove', this.boundHandlers.mousemove);
-        wrapper.addEventListener('mouseup', this.boundHandlers.mouseup);
-        wrapper.style.cursor = 'crosshair';
+        canvas.addEventListener('mousedown', this.boundHandlers.mousedown);
+        canvas.addEventListener('mousemove', this.boundHandlers.mousemove);
+        canvas.addEventListener('mouseup', this.boundHandlers.mouseup);
+        canvas.style.cursor = 'crosshair';
     },
 
     exitSelectionMode() {
-        const wrapper = document.getElementById('pdfViewer');
-        if (wrapper) {
-            wrapper.style.cursor = '';
+        const canvas = document.getElementById('whiteboardCanvas');
+        if (canvas) {
+            canvas.style.cursor = '';
             if (this.boundHandlers.mousedown) {
-                wrapper.removeEventListener('mousedown', this.boundHandlers.mousedown);
+                canvas.removeEventListener('mousedown', this.boundHandlers.mousedown);
             }
             if (this.boundHandlers.mousemove) {
-                wrapper.removeEventListener('mousemove', this.boundHandlers.mousemove);
+                canvas.removeEventListener('mousemove', this.boundHandlers.mousemove);
             }
             if (this.boundHandlers.mouseup) {
-                wrapper.removeEventListener('mouseup', this.boundHandlers.mouseup);
+                canvas.removeEventListener('mouseup', this.boundHandlers.mouseup);
             }
             this.boundHandlers = {};
-        }
-
-        // 필기 캔버스 다시 활성화
-        const drawingCanvas = document.querySelector('.drawing-canvas');
-        if (drawingCanvas) {
-            drawingCanvas.style.pointerEvents = 'all';
         }
 
         // 필기 도구 버튼들 다시 활성화
@@ -155,10 +139,10 @@ const areaSelector = {
     handleMouseDown(e) {
         if (!this.isActive) return;
         
-        const pageWrapper = document.querySelector('.pdf-page-wrapper');
-        if (!pageWrapper) return;
+        const canvas = document.getElementById('whiteboardCanvas');
+        if (!canvas) return;
 
-        const rect = pageWrapper.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         this.startX = e.clientX - rect.left;
         this.startY = e.clientY - rect.top;
         this.isSelecting = true;
@@ -170,10 +154,10 @@ const areaSelector = {
     handleMouseMove(e) {
         if (!this.isActive || !this.isSelecting) return;
 
-        const pageWrapper = document.querySelector('.pdf-page-wrapper');
-        if (!pageWrapper) return;
+        const canvas = document.getElementById('whiteboardCanvas');
+        if (!canvas) return;
 
-        const rect = pageWrapper.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         this.currentX = e.clientX - rect.left;
         this.currentY = e.clientY - rect.top;
 
@@ -217,13 +201,8 @@ const areaSelector = {
     },
 
     applyMask() {
-        const pageWrapper = document.querySelector('.pdf-page-wrapper');
-        if (!pageWrapper) return;
-
-        const pdfCanvas = pageWrapper.querySelector('canvas:not(.drawing-canvas):not(.selection-overlay)');
-        const drawingCanvas = pageWrapper.querySelector('.drawing-canvas');
-        
-        if (!pdfCanvas) return;
+        const canvas = document.getElementById('whiteboardCanvas');
+        if (!canvas) return;
 
         const x = Math.min(this.startX, this.currentX);
         const y = Math.min(this.startY, this.currentY);
@@ -237,72 +216,50 @@ const areaSelector = {
             return;
         }
 
-        // PDF 캔버스에 마스크 적용
-        const pdfCtx = pdfCanvas.getContext('2d');
+        // 화이트보드 캔버스에 마스크 적용
+        const ctx = canvas.getContext('2d');
         
         // 원본 데이터 저장 (마스킹 전)
         if (!this.isMasked) {
-            this.originalPdfImageData = pdfCtx.getImageData(0, 0, pdfCanvas.width, pdfCanvas.height);
-        }
-        
-        const pdfImageData = pdfCtx.getImageData(0, 0, pdfCanvas.width, pdfCanvas.height);
-        
-        // 선택 영역 외부를 흰색으로 변경
-        const scaleX = pdfCanvas.width / pageWrapper.offsetWidth;
-        const scaleY = pdfCanvas.height / pageWrapper.offsetHeight;
-        
-        const maskX = x * scaleX;
-        const maskY = y * scaleY;
-        const maskWidth = width * scaleX;
-        const maskHeight = height * scaleY;
-
-        for (let py = 0; py < pdfCanvas.height; py++) {
-            for (let px = 0; px < pdfCanvas.width; px++) {
-                // 선택 영역 밖이면 흰색으로
-                if (px < maskX || px >= maskX + maskWidth || 
-                    py < maskY || py >= maskY + maskHeight) {
-                    const index = (py * pdfCanvas.width + px) * 4;
-                    pdfImageData.data[index] = 255;     // R
-                    pdfImageData.data[index + 1] = 255; // G
-                    pdfImageData.data[index + 2] = 255; // B
-                    pdfImageData.data[index + 3] = 255; // A
-                }
+            try {
+                this.originalPdfImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            } catch (e) {
+                console.warn('Could not save original image data:', e);
+                return;
             }
         }
+        
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const maskX = x * scaleX;
+            const maskY = y * scaleY;
+            const maskWidth = width * scaleX;
+            const maskHeight = height * scaleY;
 
-        pdfCtx.putImageData(pdfImageData, 0, 0);
-
-        // 필기 캔버스에도 마스크 적용
-        if (drawingCanvas) {
-            const drawingCtx = drawingCanvas.getContext('2d');
-            
-            // 원본 데이터 저장 (마스킹 전)
-            if (!this.isMasked) {
-                this.originalDrawingImageData = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
-            }
-            
-            const drawingImageData = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
-            
-            const drawScaleX = drawingCanvas.width / pageWrapper.offsetWidth;
-            const drawScaleY = drawingCanvas.height / pageWrapper.offsetHeight;
-            
-            const drawMaskX = x * drawScaleX;
-            const drawMaskY = y * drawScaleY;
-            const drawMaskWidth = width * drawScaleX;
-            const drawMaskHeight = height * drawScaleY;
-
-            for (let py = 0; py < drawingCanvas.height; py++) {
-                for (let px = 0; px < drawingCanvas.width; px++) {
-                    // 선택 영역 밖이면 투명하게
-                    if (px < drawMaskX || px >= drawMaskX + drawMaskWidth || 
-                        py < drawMaskY || py >= drawMaskY + drawMaskHeight) {
-                        const index = (py * drawingCanvas.width + px) * 4;
-                        drawingImageData.data[index + 3] = 0; // Alpha를 0으로 (투명)
+            // 선택 영역 외부를 투명하게 (필기 부분만)
+            for (let py = 0; py < canvas.height; py++) {
+                for (let px = 0; px < canvas.width; px++) {
+                    // 선택 영역 밖이면 알파를 0으로
+                    if (px < maskX || px >= maskX + maskWidth || 
+                        py < maskY || py >= maskY + maskHeight) {
+                        const index = (py * canvas.width + px) * 4;
+                        imageData.data[index + 3] = 0; // Alpha를 0으로 (투명)
                     }
                 }
             }
 
-            drawingCtx.putImageData(drawingImageData, 0, 0);
+            ctx.putImageData(imageData, 0, 0);
+            
+            // PDF를 다시 그려서 필기 위에 배치
+            if (window.pdfViewer) {
+                window.pdfViewer.draw();
+            }
+        } catch (e) {
+            console.warn('Could not apply mask:', e);
         }
 
         // 마스킹 적용 완료 표시
@@ -313,28 +270,22 @@ const areaSelector = {
     },
 
     restoreOriginal() {
-        const pageWrapper = document.querySelector('.pdf-page-wrapper');
-        if (!pageWrapper) return;
+        const canvas = document.getElementById('whiteboardCanvas');
+        if (!canvas) return;
 
-        const pdfCanvas = pageWrapper.querySelector('canvas:not(.drawing-canvas):not(.selection-overlay)');
-        const drawingCanvas = pageWrapper.querySelector('.drawing-canvas');
-        
-        // PDF 캔버스 원본 복원
-        if (pdfCanvas && this.originalPdfImageData) {
-            const pdfCtx = pdfCanvas.getContext('2d');
-            pdfCtx.putImageData(this.originalPdfImageData, 0, 0);
-        }
-
-        // 필기 캔버스 원본 복원
-        if (drawingCanvas && this.originalDrawingImageData) {
-            const drawingCtx = drawingCanvas.getContext('2d');
-            drawingCtx.putImageData(this.originalDrawingImageData, 0, 0);
+        // 원본 복원
+        if (canvas && this.originalPdfImageData) {
+            const ctx = canvas.getContext('2d');
+            try {
+                ctx.putImageData(this.originalPdfImageData, 0, 0);
+            } catch (e) {
+                console.warn('Could not restore original image data:', e);
+            }
         }
 
         // 마스킹 상태 초기화
         this.isMasked = false;
         this.originalPdfImageData = null;
-        this.originalDrawingImageData = null;
         
         const btn = document.getElementById('areaSelectBtn');
         if (btn) {
