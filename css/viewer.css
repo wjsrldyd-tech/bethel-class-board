@@ -116,6 +116,13 @@
     font-weight: var(--font-weight-semibold);
     min-width: 80px;
     text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.page-info:hover {
+    background: var(--surface-muted);
+    color: var(--primary);
 }
 
 /* 필기 도구 색상 선택 */
