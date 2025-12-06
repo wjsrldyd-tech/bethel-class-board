@@ -243,10 +243,6 @@ body.fullscreen .toolbar {
     left: 0;
     right: 0;
     z-index: var(--z-index-toolbar);
-    opacity: 0.9;
-}
-
-body.fullscreen .toolbar:hover {
     opacity: 1;
 }
 

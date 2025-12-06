@@ -208,6 +208,15 @@ function createWindow() {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 
+  // Electron 전체화면 상태 변경 감지
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.send('electron-fullscreen-changed', true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send('electron-fullscreen-changed', false);
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

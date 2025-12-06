@@ -47,6 +47,18 @@ const pdfViewer = {
         // 이벤트 리스너 설정
         this.setupEventListeners();
         
+        // 브라우저 전체화면 변경 감지 (ESC 키로 종료 시에도 처리)
+        document.addEventListener('fullscreenchange', () => {
+            this.handleFullscreenChange(!!document.fullscreenElement);
+        });
+        
+        // Electron 전체화면 변경 감지 (F11 키)
+        if (window.electronAPI && window.electronAPI.onFullscreenChanged) {
+            window.electronAPI.onFullscreenChanged((isFullscreen) => {
+                this.handleFullscreenChange(isFullscreen);
+            });
+        }
+        
         // drawing.js 초기화 (drawing.js가 이 컨텍스트를 사용할 수 있도록)
         if (window.drawingTool) {
             setTimeout(() => {
@@ -562,19 +574,25 @@ const pdfViewer = {
         zoomLevel.textContent = Math.round(this.zoomScale * 100) + '%';
     },
 
+    handleFullscreenChange(isFullscreen) {
+        if (isFullscreen) {
+            document.body.classList.add('fullscreen');
+        } else {
+            document.body.classList.remove('fullscreen');
+        }
+        this.resizeCanvas();
+        this.draw();
+    },
+    
     toggleFullscreen() {
-        const container = document.getElementById('whiteboard-container');
+        // 전체 페이지를 전체화면으로 (whiteboard-container만이 아닌)
         if (!document.fullscreenElement) {
-            container.requestFullscreen().then(() => {
-                document.body.classList.add('fullscreen');
-                this.resizeCanvas();
-                this.draw();
+            document.documentElement.requestFullscreen().then(() => {
+                // handleFullscreenChange는 fullscreenchange 이벤트에서 자동 호출됨
             });
         } else {
             document.exitFullscreen().then(() => {
-                document.body.classList.remove('fullscreen');
-                this.resizeCanvas();
-                this.draw();
+                // handleFullscreenChange는 fullscreenchange 이벤트에서 자동 호출됨
             });
         }
     }
