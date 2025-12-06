@@ -298,6 +298,11 @@ ipcMain.handle('read-pdf-file', async (event, filePath) => {
   }
 });
 
+// 설정 읽기
+ipcMain.handle('get-config', async () => {
+  return loadConfig();
+});
+
 // PDF 폴더 경로 가져오기
 ipcMain.handle('get-pdfs-path', () => {
   return { success: true, path: getPdfsPath() };

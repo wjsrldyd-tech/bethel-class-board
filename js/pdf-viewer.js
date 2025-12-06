@@ -3,6 +3,7 @@ const pdfViewer = {
     pdfDoc: null,
     currentPage: 1,
     zoomScale: 1.0,
+    renderScale: 2.5, // PDF 렌더링 해상도 (기본값: 2.5, 설정 파일로 오버라이드 가능)
     whiteboardCanvas: null,
     whiteboardCtx: null,
     container: null,
@@ -43,6 +44,9 @@ const pdfViewer = {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
 
+        // 렌더링 스케일 초기화 (디바이스 픽셀 비율 기반 + 설정 파일 오버라이드)
+        await this.initRenderScale();
+
         // 이벤트 리스너 설정
         this.setupEventListeners();
         
@@ -66,6 +70,31 @@ const pdfViewer = {
         }
     },
     
+    async initRenderScale() {
+        // 설정 파일에서 PDF 렌더링 스케일 읽기
+        let configScale = null;
+        if (window.electronAPI && window.electronAPI.getConfig) {
+            try {
+                const config = await window.electronAPI.getConfig();
+                if (config.pdfRenderScale && typeof config.pdfRenderScale === 'number') {
+                    configScale = config.pdfRenderScale;
+                }
+            } catch (error) {
+                console.warn('설정 파일 읽기 실패:', error);
+            }
+        }
+        
+        // 설정 파일에 값이 있으면 사용, 없으면 2.5로 고정
+        if (configScale !== null) {
+            this.renderScale = Math.max(1.0, Math.min(configScale, 4.0)); // 1.0 ~ 4.0 범위 제한
+            console.log(`PDF 렌더링 스케일 (설정 파일): ${this.renderScale}`);
+        } else {
+            // 기본값: 2.5로 고정
+            this.renderScale = 2.5;
+            console.log(`PDF 렌더링 스케일 (기본값): ${this.renderScale}`);
+        }
+    },
+
     resizeCanvas() {
         const rect = this.container.getBoundingClientRect();
         this.whiteboardCanvas.width = rect.width;
@@ -251,7 +280,8 @@ const pdfViewer = {
 
     async renderSinglePage() {
         const page = await this.pdfDoc.getPage(this.currentPage);
-        const viewport = page.getViewport({ scale: 1 });
+        // renderScale을 사용하여 고해상도로 렌더링
+        const viewport = page.getViewport({ scale: this.renderScale });
         
         // PDF를 캔버스에 렌더링
         const renderCanvas = document.createElement('canvas');
@@ -263,16 +293,20 @@ const pdfViewer = {
             viewport: viewport
         }).promise;
         
+        // 화면에 표시할 크기는 renderScale로 나눈 값 (원본 크기)
+        const displayWidth = viewport.width / this.renderScale;
+        const displayHeight = viewport.height / this.renderScale;
+        
         // 중앙에 배치
-        const x = (this.whiteboardCanvas.width - viewport.width) / 2;
-        const y = (this.whiteboardCanvas.height - viewport.height) / 2;
+        const x = (this.whiteboardCanvas.width - displayWidth) / 2;
+        const y = (this.whiteboardCanvas.height - displayHeight) / 2;
         
         this.pdfImages.push({
             canvas: renderCanvas,
             x: x,
             y: y,
-            width: viewport.width,
-            height: viewport.height,
+            width: displayWidth,  // 화면 표시 크기
+            height: displayHeight, // 화면 표시 크기
             pageNum: this.currentPage
         });
         
@@ -354,6 +388,10 @@ const pdfViewer = {
     },
     
     drawPdfImages(ctx) {
+        // 고해상도 이미지 보간 품질 설정
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         // PDF 이미지들을 그리기
         for (const pdfImage of this.pdfImages) {
             ctx.drawImage(
