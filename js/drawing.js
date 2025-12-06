@@ -274,10 +274,9 @@ const drawingTool = {
         
         if (!layerCtx) return;
         
-        // 필기 레이어에 그릴 때는 줌 스케일을 고려하여 선 굵기 조정
-        // (drawImage로 확대될 때 원래 크기로 보이도록)
-        const zoomScale = window.pdfViewer ? window.pdfViewer.zoomScale : 1.0;
-        layerCtx.lineWidth = this.brushSize / zoomScale;
+        // 필기 레이어에 그릴 때는 brushSize를 그대로 사용
+        // (drawImage로 확대/축소할 때 선도 함께 확대/축소되어 정상적으로 보임)
+        layerCtx.lineWidth = this.brushSize;
         layerCtx.lineCap = 'round';
         layerCtx.lineJoin = 'round';
 
