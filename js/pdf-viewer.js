@@ -3,7 +3,7 @@ const pdfViewer = {
     pdfDoc: null,
     currentPage: 1,
     zoomScale: 1.0,
-    renderScale: 2.5, // PDF 렌더링 해상도 (기본값: 2.5, 설정 파일로 오버라이드 가능)
+    renderScale: 3.0, // PDF 렌더링 해상도 (기본값: 3.0, 설정 파일로 오버라이드 가능)
     whiteboardCanvas: null,
     whiteboardCtx: null,
     container: null,
@@ -101,8 +101,8 @@ const pdfViewer = {
             this.renderScale = Math.max(1.0, Math.min(configScale, 4.0)); // 1.0 ~ 4.0 범위 제한
             console.log(`PDF 렌더링 스케일 (설정 파일): ${this.renderScale}`);
         } else {
-            // 기본값: 2.5로 고정
-            this.renderScale = 2.5;
+            // 기본값: 3.0로 고정
+            this.renderScale = 3.0;
             console.log(`PDF 렌더링 스케일 (기본값): ${this.renderScale}`);
         }
     },
@@ -296,7 +296,7 @@ const pdfViewer = {
     
     zoomInAt(x, y) {
         const oldScale = this.zoomScale;
-        this.zoomScale = Math.min(this.zoomScale + 0.25, 3.0);
+        this.zoomScale = Math.min(this.zoomScale + 0.25, 5.0);
         this.updateZoomLevel();
         this.draw();
     },
@@ -313,7 +313,7 @@ const pdfViewer = {
             const loadingTask = pdfjsLib.getDocument(filePath);
             this.pdfDoc = await loadingTask.promise;
             this.currentPage = 1;
-            this.zoomScale = 2.0; // 초기 배율 200% (수업용 최적 크기)
+            this.zoomScale = 3.0; // 초기 배율 300% (수업용 최적 크기)
             this.pdfImages = [];
             this.pdfPositions = [];
             
@@ -500,7 +500,7 @@ const pdfViewer = {
     },
 
     zoomIn() {
-        this.zoomScale = Math.min(this.zoomScale + 0.25, 3.0);
+        this.zoomScale = Math.min(this.zoomScale + 0.25, 5.0);
         this.updateZoomLevel();
         this.draw();
     },
@@ -512,7 +512,7 @@ const pdfViewer = {
     },
 
     resetZoom() {
-        this.zoomScale = 2.0; // 초기 배율 200%
+        this.zoomScale = 3.0; // 초기 배율 300%
         this.updateZoomLevel();
         this.draw();
     },
