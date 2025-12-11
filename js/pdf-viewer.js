@@ -17,11 +17,16 @@ const pdfViewer = {
     drawingLayerBaseHeight: null, // 필기 레이어 초기 높이 (절대 크기)
     
     // 현재 모드
-    currentMode: 'draw', // 'draw', 'move', or 'crop'
+    currentMode: 'point', // 'point', 'draw', 'move', or 'crop'
     isDraggingPdf: false,
     dragStartX: 0,
     dragStartY: 0,
     dragPdfIndex: -1,
+
+    // 포인트 모드 관련 변수
+    pointerX: null,
+    pointerY: null,
+    isPointing: false,
     
     // PDF 페이지 위치 추적
     pdfPositions: [], // {x: number, y: number}[]
@@ -183,7 +188,16 @@ const pdfViewer = {
         this.whiteboardCanvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e));
         this.whiteboardCanvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));
         this.whiteboardCanvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));
-        this.whiteboardCanvas.addEventListener('mouseleave', () => this.handleCanvasMouseUp(null));
+        this.whiteboardCanvas.addEventListener('mouseleave', () => {
+            this.handleCanvasMouseUp(null);
+            // 포인트 모드에서 마우스가 캔버스를 벗어나면 포인터 숨김
+            if (this.currentMode === 'point') {
+                this.isPointing = false;
+                this.pointerX = null;
+                this.pointerY = null;
+                this.draw();
+            }
+        });
         
         // 터치 이벤트 처리 (자르기 모드 및 문서 이동 모드 지원)
         this.whiteboardCanvas.addEventListener('touchstart', (e) => {
@@ -233,24 +247,47 @@ const pdfViewer = {
             }
             this.handleCanvasMouseUp(null);
         }, { passive: false });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    },
+
+    handleKeyDown(e) {
+        // 입력 필드에서는 단축키 무시
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        // 스페이스바: 문서 이동 모드로 전환
+        if (e.code === 'Space') {
+            e.preventDefault();
+            this.setMode('move');
+        }
+        // ESC: 포인트 모드로 복귀 (기본 모드)
+        else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.setMode('point');
+        }
     },
     
     setMode(mode) {
         this.currentMode = mode;
-        
+
         // 버튼 활성화 상태 업데이트
         const moveBtn = document.getElementById('moveModeBtn');
         const cropBtn = document.getElementById('cropModeBtn');
-        
+
         if (moveBtn) {
             moveBtn.classList.toggle('active', mode === 'move');
         }
         if (cropBtn) {
             cropBtn.classList.toggle('active', mode === 'crop');
         }
-        
+
         // 커서 변경
-        if (mode === 'draw') {
+        if (mode === 'point') {
+            this.whiteboardCanvas.style.cursor = 'default';
+        } else if (mode === 'draw') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
         } else if (mode === 'crop') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
@@ -260,6 +297,11 @@ const pdfViewer = {
     },
     
     handleCanvasMouseDown(e) {
+        if (this.currentMode === 'point') {
+            // 포인트 모드: 클릭 동작 없음 (마우스만 따라다님)
+            return;
+        }
+
         if (this.currentMode === 'crop') {
             // 자르기 모드: 영역 선택 시작
             const rect = this.whiteboardCanvas.getBoundingClientRect();
@@ -270,7 +312,7 @@ const pdfViewer = {
             this.isSelectingCrop = true;
             return;
         }
-        
+
         if (this.currentMode !== 'move') return;
         
         const rect = this.whiteboardCanvas.getBoundingClientRect();
@@ -289,6 +331,16 @@ const pdfViewer = {
     },
     
     handleCanvasMouseMove(e) {
+        if (this.currentMode === 'point') {
+            // 포인트 모드: 마우스를 따라다니는 레이저 포인터
+            const rect = this.whiteboardCanvas.getBoundingClientRect();
+            this.pointerX = (e.clientX - rect.left) / this.zoomScale;
+            this.pointerY = (e.clientY - rect.top) / this.zoomScale;
+            this.isPointing = true;
+            this.draw();
+            return;
+        }
+
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
             // 자르기 모드: 영역 선택 중
             const rect = this.whiteboardCanvas.getBoundingClientRect();
@@ -297,7 +349,7 @@ const pdfViewer = {
             this.draw(); // 선택 영역 표시를 위해 다시 그리기
             return;
         }
-        
+
         if (this.currentMode !== 'move' || !this.isDraggingPdf || this.dragPdfIndex < 0) return;
         
         const deltaX = (e.clientX - this.dragStartX) / this.zoomScale;
@@ -315,13 +367,18 @@ const pdfViewer = {
     },
     
     handleCanvasMouseUp(e) {
+        if (this.currentMode === 'point') {
+            // 포인트 모드: 클릭 동작 없음
+            return;
+        }
+
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
             // 자르기 모드: 영역 선택 완료
             this.isSelectingCrop = false;
             this.applyCrop();
             return;
         }
-        
+
         if (this.isDraggingPdf) {
             this.isDraggingPdf = false;
             this.dragPdfIndex = -1;
@@ -485,7 +542,12 @@ const pdfViewer = {
         if (this.currentMode === 'crop' && this.isSelectingCrop) {
             this.drawCropSelection(ctx);
         }
-        
+
+        // 포인터 표시 (레이저 포인터)
+        if (this.currentMode === 'point' && this.isPointing && this.pointerX !== null && this.pointerY !== null) {
+            this.drawPointer(ctx);
+        }
+
         // Transform 복원
         ctx.restore();
     },
@@ -597,6 +659,30 @@ const pdfViewer = {
         this.updatePageInfo();
     },
     
+    // 포인터 그리기 (레이저 포인터)
+    drawPointer(ctx) {
+        const radius = 15 / this.zoomScale; // 줌에 따라 크기 조정
+
+        // 외부 원 (빨간색 테두리)
+        ctx.beginPath();
+        ctx.arc(this.pointerX, this.pointerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FF0000';
+        ctx.lineWidth = 3 / this.zoomScale;
+        ctx.stroke();
+
+        // 내부 원 (반투명 빨간색)
+        ctx.beginPath();
+        ctx.arc(this.pointerX, this.pointerY, radius * 0.7, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fill();
+
+        // 중앙 점 (진한 빨간색)
+        ctx.beginPath();
+        ctx.arc(this.pointerX, this.pointerY, radius * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = '#FF0000';
+        ctx.fill();
+    },
+
     // 자르기 선택 영역 그리기
     drawCropSelection(ctx) {
         const x = Math.min(this.cropStartX, this.cropEndX);
