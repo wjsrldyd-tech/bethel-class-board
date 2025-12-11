@@ -184,6 +184,55 @@ const pdfViewer = {
         this.whiteboardCanvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));
         this.whiteboardCanvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));
         this.whiteboardCanvas.addEventListener('mouseleave', () => this.handleCanvasMouseUp(null));
+        
+        // 터치 이벤트 처리 (자르기 모드 및 문서 이동 모드 지원)
+        this.whiteboardCanvas.addEventListener('touchstart', (e) => {
+            if (this.currentMode === 'crop' || this.currentMode === 'move') {
+                e.preventDefault(); // 기본 터치 동작 방지 (스크롤 등)
+            }
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = this.whiteboardCanvas.getBoundingClientRect();
+                // 마우스 이벤트와 동일한 형식으로 변환
+                const mouseEvent = {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                };
+                this.handleCanvasMouseDown(mouseEvent);
+            }
+        }, { passive: false });
+        
+        this.whiteboardCanvas.addEventListener('touchmove', (e) => {
+            if (this.currentMode === 'crop' || this.currentMode === 'move') {
+                e.preventDefault(); // 기본 터치 동작 방지
+            }
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = this.whiteboardCanvas.getBoundingClientRect();
+                // 마우스 이벤트와 동일한 형식으로 변환
+                const mouseEvent = {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                };
+                this.handleCanvasMouseMove(mouseEvent);
+            }
+        }, { passive: false });
+        
+        this.whiteboardCanvas.addEventListener('touchend', (e) => {
+            if (this.currentMode === 'crop' || this.currentMode === 'move') {
+                e.preventDefault(); // 기본 터치 동작 방지
+            }
+            if (e.changedTouches.length === 1) {
+                this.handleCanvasMouseUp(null);
+            }
+        }, { passive: false });
+        
+        this.whiteboardCanvas.addEventListener('touchcancel', (e) => {
+            if (this.currentMode === 'crop' || this.currentMode === 'move') {
+                e.preventDefault();
+            }
+            this.handleCanvasMouseUp(null);
+        }, { passive: false });
     },
     
     setMode(mode) {

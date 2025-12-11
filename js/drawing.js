@@ -146,6 +146,8 @@ const drawingTool = {
         this.canvas.addEventListener('touchstart', (e) => {
             // 문서 이동 모드나 자르기 모드면 필기 비활성화
             if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
+                // 자르기/이동 모드일 때도 기본 터치 동작 방지 (스크롤 등)
+                e.preventDefault();
                 return;
             }
             e.preventDefault();
@@ -162,6 +164,8 @@ const drawingTool = {
         this.canvas.addEventListener('touchmove', (e) => {
             // 문서 이동 모드나 자르기 모드면 필기 비활성화
             if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
+                // 자르기/이동 모드일 때도 기본 터치 동작 방지 (스크롤 등)
+                e.preventDefault();
                 this.stopDrawing();
                 return;
             }
@@ -177,8 +181,13 @@ const drawingTool = {
         });
 
         this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.stopDrawing();
+            // 문서 이동 모드나 자르기 모드일 때도 기본 터치 동작 방지
+            if (window.pdfViewer && (window.pdfViewer.currentMode === 'move' || window.pdfViewer.currentMode === 'crop')) {
+                e.preventDefault();
+            } else {
+                e.preventDefault();
+                this.stopDrawing();
+            }
         });
     },
 
