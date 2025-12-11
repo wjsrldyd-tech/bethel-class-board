@@ -8,6 +8,9 @@ const drawingTool = {
     brushSize: 3,
     lastX: 0,
     lastY: 0,
+    prevX: 0,  // 이전 점 (곡선 보간용)
+    prevY: 0,  // 이전 점 (곡선 보간용)
+    isFirstPoint: true,  // 첫 번째 점인지 여부
     drawings: [], // 필기 경로 저장 (undo/redo용)
     history: [],
     historyIndex: -1,
@@ -230,8 +233,15 @@ const drawingTool = {
         const scaleY = this.canvas.height / rect.height;
         
         // 실제 픽셀 좌표 사용 (줌 스케일은 PDF 렌더링에만 적용)
-        this.lastX = (e.offsetX || (e.clientX - rect.left)) * scaleX;
-        this.lastY = (e.offsetY || (e.clientY - rect.top)) * scaleY;
+        const x = (e.offsetX || (e.clientX - rect.left)) * scaleX;
+        const y = (e.offsetY || (e.clientY - rect.top)) * scaleY;
+        
+        // 첫 번째 점 설정
+        this.lastX = x;
+        this.lastY = y;
+        this.prevX = x;
+        this.prevY = y;
+        this.isFirstPoint = true;
     },
 
     draw(e) {
@@ -296,9 +306,26 @@ const drawingTool = {
             }
 
             ctx.beginPath();
-            ctx.moveTo(this.lastX, this.lastY);
-            ctx.lineTo(currentX, currentY);
-            ctx.stroke();
+            
+            if (this.isFirstPoint) {
+                // 첫 번째 점은 moveTo만
+                ctx.moveTo(this.lastX, this.lastY);
+                this.isFirstPoint = false;
+            } else {
+                // Quadratic Bezier 곡선 사용 (부드러운 곡선)
+                // 제어점: 이전 점과 현재 점의 중간점
+                const controlX = (this.lastX + currentX) / 2;
+                const controlY = (this.lastY + currentY) / 2;
+                
+                // 이전 점에서 제어점을 거쳐 현재 점까지 곡선 그리기
+                ctx.moveTo(this.prevX, this.prevY);
+                ctx.quadraticCurveTo(this.lastX, this.lastY, controlX, controlY);
+                ctx.stroke();
+                
+                // 다음 곡선을 위해 현재 점을 시작점으로 설정
+                ctx.beginPath();
+                ctx.moveTo(controlX, controlY);
+            }
             
             // 복원
             ctx.globalCompositeOperation = 'source-over';
@@ -310,13 +337,59 @@ const drawingTool = {
             window.pdfViewer.draw();
         }
 
+        // 이전 점 업데이트
+        this.prevX = this.lastX;
+        this.prevY = this.lastY;
         this.lastX = currentX;
         this.lastY = currentY;
     },
 
     stopDrawing() {
         if (this.isDrawing) {
+            // 마지막 점까지 곡선 완성
+            if (!this.isFirstPoint && this.ctx) {
+                const contexts = [];
+                if (this.currentTool === 'eraser') {
+                    if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+                        contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
+                    }
+                } else {
+                    contexts.push(this.ctx);
+                    if (window.pdfViewer && window.pdfViewer.drawingLayerCanvas) {
+                        contexts.push(window.pdfViewer.drawingLayerCanvas.getContext('2d'));
+                    }
+                }
+                
+                contexts.forEach(ctx => {
+                    ctx.lineWidth = this.brushSize;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    if (this.currentTool === 'pen') {
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.strokeStyle = this.currentColor;
+                        ctx.globalAlpha = 1.0;
+                    } else if (this.currentTool === 'highlight') {
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.strokeStyle = this.currentColor;
+                        ctx.globalAlpha = 0.3;
+                    } else if (this.currentTool === 'eraser') {
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.globalAlpha = 1.0;
+                        ctx.strokeStyle = 'rgba(0,0,0,1)';
+                    }
+                    
+                    // 마지막 점까지 직선으로 연결 (곡선 완성)
+                    ctx.lineTo(this.lastX, this.lastY);
+                    ctx.stroke();
+                    
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = 1.0;
+                });
+            }
+            
             this.isDrawing = false;
+            this.isFirstPoint = true;
             if (this.ctx) {
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.globalAlpha = 1.0;
