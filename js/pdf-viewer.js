@@ -282,6 +282,27 @@ const pdfViewer = {
             e.preventDefault();
             this.setMode('crop');
         }
+        // 1-5 키: 색상 선택 (1=검정, 2=빨강, 3=파랑, 4=초록, 5=보라)
+        else if (e.key >= '1' && e.key <= '5') {
+            e.preventDefault();
+            const colors = ['#000000', '#FF0000', '#0000FF', '#00FF00', '#FF00FF'];
+            const colorIndex = parseInt(e.key) - 1;
+            const selectedColor = colors[colorIndex];
+
+            // 색상 변경
+            if (window.drawingTool) {
+                window.drawingTool.currentColor = selectedColor;
+            }
+
+            // 색상 옵션 버튼 활성화 상태 업데이트
+            const colorOptions = document.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.color === selectedColor) {
+                    option.classList.add('active');
+                }
+            });
+        }
     },
     
     setMode(mode) {
@@ -290,6 +311,9 @@ const pdfViewer = {
         // 버튼 활성화 상태 업데이트
         const moveBtn = document.getElementById('moveModeBtn');
         const cropBtn = document.getElementById('cropModeBtn');
+        const penBtn = document.getElementById('penTool');
+        const highlightBtn = document.getElementById('highlightTool');
+        const eraserBtn = document.getElementById('eraserTool');
 
         if (moveBtn) {
             moveBtn.classList.toggle('active', mode === 'move');
@@ -298,12 +322,19 @@ const pdfViewer = {
             cropBtn.classList.toggle('active', mode === 'crop');
         }
 
+        // draw 모드가 아니면 필기 도구 버튼 비활성화
+        if (mode !== 'draw') {
+            if (penBtn) penBtn.classList.remove('active');
+            if (highlightBtn) highlightBtn.classList.remove('active');
+            if (eraserBtn) eraserBtn.classList.remove('active');
+        }
+
         // 커서 변경
         if (mode === 'point') {
             this.whiteboardCanvas.style.cursor = 'default';
         } else if (mode === 'draw') {
-            // 펜 모양 커서 - 더 큰 사이즈
-            const penCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M26 3L29 6L11 24L6 26L8 21L26 3Z' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3Cpath d='M6 26L3 29' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 32, pointer`;
+            // 펜 모양 커서 - 우하 방향 (오른쪽 아래)
+            const penCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M3 3L6 6L24 24L29 26L27 21L3 3Z' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3Cpath d='M26 29L29 26' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0, pointer`;
             this.whiteboardCanvas.style.cursor = penCursor;
         } else if (mode === 'crop') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
