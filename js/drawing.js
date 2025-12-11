@@ -196,7 +196,7 @@ const drawingTool = {
 
     setTool(tool) {
         this.currentTool = tool;
-        
+
         // 버튼 활성화 상태 업데이트
         document.querySelectorAll('.toolbar-btn').forEach(btn => {
             if (btn.id === 'penTool' || btn.id === 'highlightTool' || btn.id === 'eraserTool') {
@@ -206,13 +206,13 @@ const drawingTool = {
 
         if (tool === 'pen') {
             document.getElementById('penTool').classList.add('active');
-            if (this.canvas) this.canvas.style.cursor = 'crosshair';
+            // 커서는 pdf-viewer.js의 setMode()에서 관리
         } else if (tool === 'highlight') {
             document.getElementById('highlightTool').classList.add('active');
-            if (this.canvas) this.canvas.style.cursor = 'crosshair';
+            // 커서는 pdf-viewer.js의 setMode()에서 관리
         } else if (tool === 'eraser') {
             document.getElementById('eraserTool').classList.add('active');
-            if (this.canvas) this.canvas.style.cursor = 'grab';
+            // 커서는 pdf-viewer.js의 setMode()에서 관리
         }
     },
 

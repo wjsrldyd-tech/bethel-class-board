@@ -268,6 +268,20 @@ const pdfViewer = {
             e.preventDefault();
             this.setMode('point');
         }
+        // P 키: 펜 모드로 전환
+        else if (e.key === 'p' || e.key === 'P') {
+            e.preventDefault();
+            this.setMode('draw');
+            // 펜 도구 활성화
+            if (window.drawingTool) {
+                window.drawingTool.setTool('pen');
+            }
+        }
+        // S 키: 자르기 모드로 전환
+        else if (e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            this.setMode('crop');
+        }
     },
     
     setMode(mode) {
@@ -288,7 +302,9 @@ const pdfViewer = {
         if (mode === 'point') {
             this.whiteboardCanvas.style.cursor = 'default';
         } else if (mode === 'draw') {
-            this.whiteboardCanvas.style.cursor = 'crosshair';
+            // 펜 모양 커서 - 더 큰 사이즈
+            const penCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M26 3L29 6L11 24L6 26L8 21L26 3Z' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3Cpath d='M6 26L3 29' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 32, pointer`;
+            this.whiteboardCanvas.style.cursor = penCursor;
         } else if (mode === 'crop') {
             this.whiteboardCanvas.style.cursor = 'crosshair';
         } else {
