@@ -77,7 +77,8 @@
                 <!-- 페이지 네비게이션 -->
                 <div class="toolbar-group">
                     <button class="toolbar-btn" id="prevPage" title="이전 페이지">◀</button>
-                    <button class="toolbar-btn" id="pageInfo" title="현재 페이지 다시 보기 (자르기 취소)">1 / 1</button>
+                    <button class="toolbar-btn" id="pageInfo" title="페이지 선택">1 / 1</button>
+                    <button class="toolbar-btn" id="reloadPage" title="현재 페이지 다시 보기 (자르기 취소)">🔄</button>
                     <button class="toolbar-btn" id="nextPage" title="다음 페이지">▶</button>
                 </div>
 
@@ -94,6 +95,27 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- 페이지 선택 모달 -->
+    <div class="page-select-modal" id="pageSelectModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>페이지 선택</h3>
+                <button class="modal-close-btn" id="closePageModal" title="닫기">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- 섹션 탭 -->
+                <div class="page-section-tabs" id="pageSectionTabs">
+                    <!-- 동적으로 생성 -->
+                </div>
+                <!-- 페이지 썸네일 그리드 -->
+                <div class="page-thumbnail-grid" id="pageThumbnailGrid">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript 파일 로드 -->

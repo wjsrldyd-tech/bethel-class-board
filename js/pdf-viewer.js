@@ -133,9 +133,40 @@ const pdfViewer = {
             this.nextPage();
         });
         
-        // 페이지 정보 버튼 (현재 페이지 다시 보기 / 자르기 취소)
+        // 페이지 정보 버튼 (페이지 선택 모달 열기)
         document.getElementById('pageInfo').addEventListener('click', () => {
+            this.openPageSelectModal();
+        });
+
+        // 현재 페이지 다시 보기 버튼
+        document.getElementById('reloadPage').addEventListener('click', () => {
             this.reloadCurrentPage();
+        });
+
+        // 모달 닫기 버튼
+        document.getElementById('closePageModal').addEventListener('click', () => {
+            this.closePageSelectModal();
+        });
+
+        // 모달 오버레이 클릭 시 닫기 (이벤트 위임 사용)
+        const modal = document.getElementById('pageSelectModal');
+        if (modal) {
+            const overlay = modal.querySelector('.modal-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    this.closePageSelectModal();
+                });
+            }
+        }
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('pageSelectModal');
+                if (modal && modal.classList.contains('active')) {
+                    this.closePageSelectModal();
+                }
+            }
         });
 
         // 줌 컨트롤
@@ -908,6 +939,157 @@ const pdfViewer = {
                 // handleFullscreenChange는 fullscreenchange 이벤트에서 자동 호출됨
             });
         }
+    },
+
+    // 페이지 선택 모달 열기
+    async openPageSelectModal() {
+        if (!this.pdfDoc) return;
+
+        const modal = document.getElementById('pageSelectModal');
+        modal.classList.add('active');
+
+        // 섹션 탭 생성
+        this.renderPageSectionTabs();
+
+        // 현재 페이지가 있는 섹션 찾기 및 선택
+        const pagesPerSection = 20;
+        const currentSectionIndex = Math.floor((this.currentPage - 1) / pagesPerSection);
+        const sectionTabs = document.querySelectorAll('.page-section-tab');
+        
+        if (sectionTabs[currentSectionIndex]) {
+            sectionTabs[currentSectionIndex].click();
+        } else if (sectionTabs.length > 0) {
+            // 현재 페이지가 범위를 벗어난 경우 첫 번째 섹션 선택
+            sectionTabs[0].click();
+        }
+    },
+
+    // 페이지 선택 모달 닫기
+    closePageSelectModal() {
+        const modal = document.getElementById('pageSelectModal');
+        modal.classList.remove('active');
+    },
+
+    // 섹션 탭 렌더링 (20페이지 단위)
+    renderPageSectionTabs() {
+        if (!this.pdfDoc) return;
+
+        const tabsContainer = document.getElementById('pageSectionTabs');
+        tabsContainer.innerHTML = '';
+
+        const totalPages = this.pdfDoc.numPages;
+        const pagesPerSection = 20;
+        const numSections = Math.ceil(totalPages / pagesPerSection);
+
+        for (let i = 0; i < numSections; i++) {
+            const startPage = i * pagesPerSection + 1;
+            const endPage = Math.min((i + 1) * pagesPerSection, totalPages);
+            
+            const tab = document.createElement('button');
+            tab.className = 'page-section-tab';
+            tab.textContent = `${startPage}-${endPage}`;
+            tab.dataset.startPage = startPage;
+            tab.dataset.endPage = endPage;
+
+            tab.addEventListener('click', () => {
+                // 활성 탭 표시
+                document.querySelectorAll('.page-section-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                tab.classList.add('active');
+
+                // 해당 섹션의 썸네일 표시
+                this.renderPageThumbnails(startPage, endPage);
+            });
+
+            tabsContainer.appendChild(tab);
+        }
+    },
+
+    // 페이지 썸네일 렌더링
+    async renderPageThumbnails(startPage, endPage) {
+        if (!this.pdfDoc) return;
+
+        const gridContainer = document.getElementById('pageThumbnailGrid');
+        gridContainer.innerHTML = '';
+
+        for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+            const thumbnailItem = document.createElement('div');
+            thumbnailItem.className = 'page-thumbnail-item';
+            if (pageNum === this.currentPage) {
+                thumbnailItem.classList.add('current');
+            }
+            thumbnailItem.dataset.pageNum = pageNum;
+
+            // 로딩 상태 표시
+            thumbnailItem.classList.add('loading');
+            thumbnailItem.innerHTML = `
+                <div class="page-thumbnail-canvas">로딩 중...</div>
+                <div class="page-thumbnail-number">${pageNum}</div>
+            `;
+
+            // 클릭 이벤트
+            thumbnailItem.addEventListener('click', () => {
+                this.goToPage(pageNum);
+                this.closePageSelectModal();
+            });
+
+            gridContainer.appendChild(thumbnailItem);
+
+            // 썸네일 렌더링 (비동기)
+            this.renderThumbnail(pageNum, thumbnailItem);
+        }
+    },
+
+    // 개별 썸네일 렌더링
+    async renderThumbnail(pageNum, container) {
+        try {
+            const page = await this.pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 0.3 }); // 썸네일용 작은 스케일
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            // 로딩 상태 제거 및 썸네일 표시
+            container.classList.remove('loading');
+            container.innerHTML = `
+                <canvas class="page-thumbnail-canvas"></canvas>
+                <div class="page-thumbnail-number">${pageNum}</div>
+            `;
+            
+            const thumbnailCanvas = container.querySelector('.page-thumbnail-canvas');
+            thumbnailCanvas.width = canvas.width;
+            thumbnailCanvas.height = canvas.height;
+            const thumbnailCtx = thumbnailCanvas.getContext('2d');
+            thumbnailCtx.drawImage(canvas, 0, 0);
+        } catch (error) {
+            console.error(`페이지 ${pageNum} 썸네일 렌더링 실패:`, error);
+            container.classList.remove('loading');
+            container.innerHTML = `
+                <div class="page-thumbnail-canvas" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                    오류
+                </div>
+                <div class="page-thumbnail-number">${pageNum}</div>
+            `;
+        }
+    },
+
+    // 특정 페이지로 이동
+    async goToPage(pageNum) {
+        if (!this.pdfDoc || pageNum < 1 || pageNum > this.pdfDoc.numPages) {
+            return;
+        }
+
+        this.currentPage = pageNum;
+        await this.renderPage();
+        this.updatePageInfo();
     }
 };
 
