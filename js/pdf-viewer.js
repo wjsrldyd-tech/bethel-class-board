@@ -1045,7 +1045,7 @@ const pdfViewer = {
     async renderThumbnail(pageNum, container) {
         try {
             const page = await this.pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 0.3 }); // 썸네일용 작은 스케일
+            const viewport = page.getViewport({ scale: 0.5 }); // 썸네일용 중간 스케일
 
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
