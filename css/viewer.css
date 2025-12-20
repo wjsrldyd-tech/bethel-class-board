@@ -309,12 +309,12 @@
     color: var(--color-white);
 }
 
-/* 페이지 썸네일 그리드 */
+/* 페이지 썸네일 그리드 (2x5 그리드: 5열 고정) */
 .page-thumbnail-grid {
     flex: 1;
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--spacing-3xl);
     padding: var(--spacing-md);
 }
@@ -330,7 +330,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 120px;
+    min-height: 180px;
 }
 
 .page-thumbnail-item:hover {

@@ -952,7 +952,7 @@ const pdfViewer = {
         this.renderPageSectionTabs();
 
         // 현재 페이지가 있는 섹션 찾기 및 선택
-        const pagesPerSection = 20;
+        const pagesPerSection = 10;
         const currentSectionIndex = Math.floor((this.currentPage - 1) / pagesPerSection);
         const sectionTabs = document.querySelectorAll('.page-section-tab');
         
@@ -970,7 +970,7 @@ const pdfViewer = {
         modal.classList.remove('active');
     },
 
-    // 섹션 탭 렌더링 (20페이지 단위)
+    // 섹션 탭 렌더링 (10페이지 단위)
     renderPageSectionTabs() {
         if (!this.pdfDoc) return;
 
@@ -978,7 +978,7 @@ const pdfViewer = {
         tabsContainer.innerHTML = '';
 
         const totalPages = this.pdfDoc.numPages;
-        const pagesPerSection = 20;
+        const pagesPerSection = 10;
         const numSections = Math.ceil(totalPages / pagesPerSection);
 
         for (let i = 0; i < numSections; i++) {
