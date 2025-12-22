@@ -93,6 +93,13 @@
                 <div class="toolbar-group">
                     <button class="toolbar-btn" id="fullscreenBtn" title="전체화면">⛶</button>
                 </div>
+
+                <!-- 저장 기능 -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="saveCanvasBtn" title="현재 캔버스 저장">💾</button>
+                    <button class="toolbar-btn" id="savedListBtn" title="저장된 문제 목록">📋</button>
+                    <button class="toolbar-btn" id="hideSavedImageBtn" title="저장된 이미지 숨기기" style="display: none;">👁️</button>
+                </div>
             </div>
         </main>
     </div>
@@ -118,6 +125,22 @@
         </div>
     </div>
 
+    <!-- 저장된 문제 목록 모달 -->
+    <div class="saved-list-modal" id="savedListModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>저장된 문제 목록</h3>
+                <button class="modal-close-btn" id="closeSavedListModal" title="닫기">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="saved-images-grid" id="savedImagesGrid">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript 파일 로드 -->
     <script>
         // electronAPI 준비 확인
@@ -129,6 +152,7 @@
     <script src="js/pdf-viewer.js"></script>
     <script src="js/drawing.js"></script>
     <script src="js/touch.js"></script>
+    <script src="js/save-manager.js"></script>
 </body>
 </html>
 

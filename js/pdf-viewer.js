@@ -483,6 +483,10 @@ const pdfViewer = {
         this.zoomScale = Math.min(this.zoomScale + 0.25, 5.0);
         this.updateZoomLevel();
         this.draw();
+        // 저장된 이미지 다시 그리기
+        if (window.saveManager) {
+            window.saveManager.onZoomChange();
+        }
     },
     
     zoomOutAt(x, y) {
@@ -490,6 +494,10 @@ const pdfViewer = {
         this.zoomScale = Math.max(this.zoomScale - 0.25, 0.5);
         this.updateZoomLevel();
         this.draw();
+        // 저장된 이미지 다시 그리기
+        if (window.saveManager) {
+            window.saveManager.onZoomChange();
+        }
     },
 
     async loadPdf(filePath) {
@@ -692,18 +700,30 @@ const pdfViewer = {
         this.zoomScale = Math.min(this.zoomScale + 0.25, 5.0);
         this.updateZoomLevel();
         this.draw();
+        // 저장된 이미지 다시 그리기
+        if (window.saveManager) {
+            window.saveManager.onZoomChange();
+        }
     },
 
     zoomOut() {
         this.zoomScale = Math.max(this.zoomScale - 0.25, 0.5);
         this.updateZoomLevel();
         this.draw();
+        // 저장된 이미지 다시 그리기
+        if (window.saveManager) {
+            window.saveManager.onZoomChange();
+        }
     },
 
     resetZoom() {
         this.zoomScale = 3.0; // 초기 배율 300%
         this.updateZoomLevel();
         this.draw();
+        // 저장된 이미지 다시 그리기
+        if (window.saveManager) {
+            window.saveManager.onZoomChange();
+        }
     },
 
     updatePageInfo() {

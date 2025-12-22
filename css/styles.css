@@ -221,6 +221,7 @@ body {
     cursor: crosshair;
     touch-action: none;
     background: var(--white);
+    z-index: 1; /* 기본 레이어 */
 }
 
 /* ==================== 영역 선택 ==================== */

@@ -308,3 +308,138 @@ ipcMain.handle('get-pdfs-path', () => {
   return { success: true, path: getPdfsPath() };
 });
 
+// 저장된 문제 이미지 폴더 경로 가져오기
+function getSavedProblemsPath() {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'saved-problems');
+}
+
+// 저장된 문제 이미지 폴더 생성 (없으면)
+function ensureSavedProblemsFolder() {
+  const savedPath = getSavedProblemsPath();
+  if (!fs.existsSync(savedPath)) {
+    fs.mkdirSync(savedPath, { recursive: true });
+  }
+  return savedPath;
+}
+
+// 캔버스 이미지 저장
+ipcMain.handle('save-canvas-image', async (event, imageData, filename) => {
+  try {
+    ensureSavedProblemsFolder();
+    const savedPath = getSavedProblemsPath();
+    
+    // filename이 없으면 자동 생성 (problem_001.png 형식)
+    if (!filename) {
+      const files = fs.readdirSync(savedPath).filter(f => f.startsWith('problem_') && f.endsWith('.png'));
+      const numbers = files.map(f => {
+        const match = f.match(/problem_(\d+)\.png/);
+        return match ? parseInt(match[1]) : 0;
+      });
+      const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+      filename = `problem_${String(nextNumber).padStart(3, '0')}.png`;
+    }
+    
+    const filePath = path.join(savedPath, filename);
+    
+    // base64 데이터를 버퍼로 변환
+    const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    fs.writeFileSync(filePath, buffer);
+    
+    return { success: true, filename, path: filePath };
+  } catch (error) {
+    console.error('이미지 저장 오류:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 저장된 이미지 목록 가져오기
+ipcMain.handle('get-saved-images', async () => {
+  try {
+    ensureSavedProblemsFolder();
+    const savedPath = getSavedProblemsPath();
+    
+    if (!fs.existsSync(savedPath)) {
+      return { success: true, images: [] };
+    }
+    
+    const files = fs.readdirSync(savedPath)
+      .filter(f => f.endsWith('.png'))
+      .map(f => {
+        const filePath = path.join(savedPath, f);
+        const stats = fs.statSync(filePath);
+        return {
+          filename: f,
+          path: filePath,
+          created: stats.birthtime,
+          modified: stats.mtime,
+          size: stats.size
+        };
+      })
+      .sort((a, b) => b.created - a.created); // 최신순 정렬
+    
+    return { success: true, images: files };
+  } catch (error) {
+    console.error('저장된 이미지 목록 가져오기 오류:', error);
+    return { success: false, error: error.message, images: [] };
+  }
+});
+
+// 저장된 이미지 삭제
+ipcMain.handle('delete-saved-image', async (event, filename) => {
+  try {
+    const savedPath = getSavedProblemsPath();
+    const filePath = path.join(savedPath, filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return { success: true };
+    }
+    
+    return { success: false, error: '파일을 찾을 수 없습니다.' };
+  } catch (error) {
+    console.error('이미지 삭제 오류:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 저장된 이미지 경로 가져오기 (file:// 프로토콜로)
+ipcMain.handle('get-saved-image-path', async (event, filename) => {
+  try {
+    const savedPath = getSavedProblemsPath();
+    const filePath = path.join(savedPath, filename);
+    
+    if (fs.existsSync(filePath)) {
+      return { success: true, path: filePath };
+    }
+    
+    return { success: false, error: '파일을 찾을 수 없습니다.' };
+  } catch (error) {
+    console.error('이미지 경로 가져오기 오류:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 저장된 이미지를 base64로 읽기
+ipcMain.handle('read-saved-image-base64', async (event, filename) => {
+  try {
+    const savedPath = getSavedProblemsPath();
+    const filePath = path.join(savedPath, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: '파일을 찾을 수 없습니다.' };
+    }
+    
+    const buffer = fs.readFileSync(filePath);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:image/png;base64,${base64}`;
+    
+    return { success: true, dataUrl };
+  } catch (error) {
+    console.error('이미지 읽기 오류:', error);
+    return { success: false, error: error.message };
+  }
+});
+
